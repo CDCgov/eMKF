@@ -1,25 +1,93 @@
-# CDCgov GitHub Organization Open Source Project Template
-
-**Template for clearance: This project serves as a template to aid projects in starting up and moving through clearance procedures. To start, create a new repository and implement the required [open practices](open_practices.md), train on and agree to adhere to the organization's [rules of behavior](rules_of_behavior.md), and [send a request through the create repo form](https://forms.office.com/Pages/ResponsePage.aspx?id=aQjnnNtg_USr6NJ2cHf8j44WSiOI6uNOvdWse4I-C2NUNk43NzMwODJTRzA4NFpCUk1RRU83RTFNVi4u) using language from this template as a Guide.**
+# The Enhanced Modified Kalman Filter (eMKF) tool for small domain estimation
 
 **General disclaimer** This repository was created for use by CDC programs to collaborate on public health related projects in support of the [CDC mission](https://www.cdc.gov/about/organization/mission.htm).  GitHub is not hosted by the CDC, but is a third party website used by CDC and its partners to share information and collaborate on software. CDC use of GitHub does not imply an endorsement of any one particular service, product, or enterprise. 
 
-## Access Request, Repo Creation Request
+## Overview
 
-* [CDC GitHub Open Project Request Form](https://forms.office.com/Pages/ResponsePage.aspx?id=aQjnnNtg_USr6NJ2cHf8j44WSiOI6uNOvdWse4I-C2NUNk43NzMwODJTRzA4NFpCUk1RRU83RTFNVi4u) _[Requires a CDC Office365 login, if you do not have a CDC Office365 please ask a friend who does to submit the request on your behalf. If you're looking for access to the CDCEnt private organization, please use the [GitHub Enterprise Cloud Access Request form](https://forms.office.com/Pages/ResponsePage.aspx?id=aQjnnNtg_USr6NJ2cHf8j44WSiOI6uNOvdWse4I-C2NUQjVJVDlKS1c0SlhQSUxLNVBaOEZCNUczVS4u).]_
+This project contains the SAS code to implement the enhanced Modified Kalman Filter (eMKF). The enhanced MKF procedure enables production of model-based estimates for small populations where direct estimates may lack precision, improving the availability of data for assessing and monitoring health disparities. The enhanced MKF procedure and macro build on the earlier Modified Kalman Filter procedure (Setodji, Lockwood, McCaffrey, Elliott & Adams, 2011) to accommodate nonlinear time trends, irregularly spaced time points, and random sampling variances for the underlying population subgroup means, rates, or proportions. Bayesian estimation in the eMKF macro is implemented adaptably and transparently using PROC MCMC and related SAS 9.4 procedures. Model averaging in the eMKF macro uses a Bayesian mixture prior approach, and renders predictions more robust to polynomial trend misspecification. Various other features in the eMKF macro also improve its functionality, flexibility, and usability relative to the earlier macro; an outline of these improvements is included below. 
+
+This project contains the SAS macro to implement the eMKF, emkf_macro.sas, along with several examples of SAS code to implement the eMKF macro [Testing-and-implementation] with some sample data sets [Sample-data-files]. All data included here are public-use and/or simulated data. 
+
+### Requires
+
+* SAS 9.4
 
 ## Related documents
 
-* [Open Practices](open_practices.md)
-* [Rules of Behavior](rules_of_behavior.md)
-* [Thanks and Acknowledgements](thanks.md)
-* [Disclaimer](DISCLAIMER.md)
-* [Contribution Notice](CONTRIBUTING.md)
-* [Code of Conduct](code-of-conduct.md)
+* [Link to Series 2 report]
+* [Link to Series 2 report]
+* [] (Default eMKF macro parameter settings)
 
-## Overview
+### Outline of methodological differences between eMKF and the original MKF (implemented as of 11-October-2023)
 
-Describe the purpose of your project. Add additional sections as necessary to help collaborators and potential collaborators understand and use your project.
+* Time points
+
+     1.   eMKF allows for time points to be unequally spaced.
+     2.   In the MLE-based setting, eMKF updates the recursion formulas used to determine the MSE-optimal estimators (BLUPs) of the true states to allow for an arbitrary lag between successive time points instead of lag=1 (see Lockwood et al 2011; DOI: 10.1002/sim.3897).
+
+* Polynomial trends
+
+     3.   eMKF allows for quadratic and cubic time trends to be fitted in both the Bayesian and MLE-based estimation settings.
+     4.   By default, eMKF does not allow fitting a degree k polynomial trend (k=0,1,2,3) unless there are k+4 available time points.
+     5.   eMKF returns an error if there is only one available time point per group.
+     6.   eMKF pre-transforms trend coefficients using an orthogonal polynomial design matrix for comparability of coefficients in linear, quad, and cubic trend models. The coefficients are reverse-transformed before the program exits so the user only sees the "raw" coefficients.
+
+* Sampling variances
+
+     7.   eMKF allows for random sampling variances in the Bayesian setting (see Polettini 2017; DOI 10.1214/16-BA1019, for an overview).
+     8.   eMKF uses (effective) sample size (neff) as degrees of freedom in chi-squared distribution of group- and time-specific sampling variance, therefore neff must be supplied. 
+
+* Disparities calculations
+
+     9.   In the Bayesian setting, eMKF estimates all pairwise differences and ratios between groups at the latest time point.
+     10. Additional disparities measures (highest and lowest rates, maximal rate difference and ratio, summary rate difference and ratio) are also calculated.
+     11. The user can further calculate any other measures he/she desires from the posterior draws, which the user can request to be saved to the workspace. 
+      These features differ from MKF where only pairwise differences were calculated and the full MCMC samples from the joint posterior distribution were not available.
+
+* Bayesian estimation setting
+
+     12. eMKF implements "independent" and "common" trend options, which were left out of the RAND version of the macro, in addition to the "full" hierarchical Bayesian model (see RAND User's Guide "TR997_compiled").
+     13. eMKF implements Bayesian model averaging using a mixture prior approach, up to linear (3 possible models), quadratic (5 possible models), or cubic (7 possible models).
+     14. eMKF replaces the call to the external .exe file (which consisted of pre-compiled C code) with a call to PROC MCMC.
+     15. eMKF implements Gibbs sampling in PROC MCMC by calling user defined samplers (UDSs) that are custom-built and precompiled using PROC FCMP.
+     16. eMKF replaces z-score-based convergence diagnostic used in MKF with robust version of the Gelman-Rubin diagnostic (see Vehtari et al 2021; DOI 10.1214/20-BA1221).
+     17. eMKF applies the Gelman-Rubin diagnostic to all model parameters, not just for the true state predictions (etas) as in the original MKF.
+     18. eMKF defaults to more stringent threshold of 1.01 instead of 1.10 for the Gelman-Rubin diagnostic, as per recommendation in Vehtari et al (2021). 
+     19. eMKF defaults to 4 chains instead of 3, as per recommendation in Vehtari et al (2021). Each chain is further split in 2 to compute the Gelman-Rubin diagnostic.
+     20. eMKF uses closed-form expressions for the determinant, inverse, and Cholesky decomposition of the AR variance-covariance matrix whenever possible to speed up calculations.
+     21. eMKF allows the user to select the built-in slice sampler in PROC MCMC to use instead of the traditional random walk MH sampler for sampling AR parameters + SD hyperparameters.
+
+* MLE-based estimation setting
+
+     22. In eMKF, any subset of the seven allowable models (indep_cubic, _quad, _linear; common_cubic, _quad, _linear; and dropped) can be averaged. 
+     23. However, the code checks the specified models and adds a common "descendent" if is not already included, so as to have a reference model for Bayes factors.
+     24. eMKF increases the maxiter option for PROC NLMIXED to 400 instead of 200 (default) when dealing with two outcomes to improve convergence when k = 2,3.
+     25. eMKF initializes parameters to pass to PROC NLMIXED using the appropriate 'by' group stratum/replication (PROC REG). This differs from MKF where only the first stratum/replication was used to initialize the regression coefficients across strata/replications.
+     26. eMKF initializes parameters to pass to PROC NLMIXED using the appropriate degree k polynomial regression (PROC REG), including for k=0. This differs from MKF where for k=0 (dropped), the intercept values were initialized at those from the linear regression y=a+b*t instead of y=a.
+     27. For the dropped (k=0) case, eMKF only keeps the column vector of 1s in the X matrix (and subsequent matrix calculations for the MSE). This differs from MKF where both the 1s and ts column were kept in the X matrix.
+
+* Macro usability
+
+     28. eMKF includes extensive comments and streamlines the code for readability.
+     29. eMKF allows the user additional flexibility in customizing model output and diagnostics, and streamlines the SAS workspace.
+     30. eMKF checks for errors in macro parameter specification, including length of character strings for prefix of output datasets.
+     31. Std. Error label in output table was replaced with RMSE in eMKF to avoid confusion.
+
+
+### References
+
+Lockwood JR, McCaffrey DF, Setodji CM, Elliott MN. Smoothing across time in repeated cross-sectional data. Stat Med 30(5):584–94. 2011.
+
+Polettini S. A generalised semiparametric Bayesian Fay–Herriot model for small area estimation shrinking both means and variances. Bayesian Anal 12(3):729–52. 2016.
+    
+Rossen LM, Talih M, Patel P, Earp M, Parker JD. Evaluation of an enhanced modified Kalman filter approach for estimating health outcomes in small subpopulations. National Center for Health Statistics. Vital Health Stat 2(208). 2024. 
+
+Setodji CM, Lockwood JR, McCaffrey DF, Elliott MN, Adams JL. The Modified Kalman Filter macro: User’s guide. RAND Technical Report No. TR-997-DHHS. 2011. Available from: https://www.rand.org/pubs/technical_reports/TR997.html.
+
+Talih M, Rossen LM, Patel P, Earp M, Parker JD. Technical guidance for using the modified Kalman filter in small-domain estimation at the National Center for Health Statistics. National Center for Health Statistics. Vital Health Stat 2(209). 2024. 
+
+Vehtari A, Gelman A, Simpson D, Carpenter B, Bürkner PC. Rank-normalization, folding, and localization: An improved Ȓ for assessing convergence of MCMC (with discussion). Bayesian Anal 16(2):667–718. 2021.
+
   
 ## Public Domain Standard Notice
 This repository constitutes a work of the United States Government and is not
