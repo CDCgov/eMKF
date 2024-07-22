@@ -14,7 +14,7 @@ This project contains the SAS macro to implement the eMKF, emkf_macro.sas, along
 
 ### Running the eMKF macro
 
-`<code><i><b>[include description here of how to run the macro]</i></b><code>`
+<code><i><b>[include description here of how to run the macro]</i></b><code>
 
 ## Related documents
 
