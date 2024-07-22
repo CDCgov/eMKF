@@ -18,9 +18,13 @@ This project contains the SAS macro to implement the eMKF, emkf_macro.sas, along
 
 ## Related documents
 <mark>
+     
 * [Link to Series 2 report]
-* [Link to Series 2 report]
+* [Link to Series 2 report
+
 </mark>
+
+
 ### Outline of methodological differences between eMKF and the original MKF (implemented as of 11-October-2023)
 
 * Time points
