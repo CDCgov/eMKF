@@ -26,6 +26,19 @@
  */
 %let user_path = \\..; /* Replace \\.. with the applicable path */
 
+
+options nonotes;
+OPTIONS FORMCHAR="|----|+|---+=|-/\<>*";
+
+/* To output the log and results to a .log and .html file */
+
+ods listing close;
+proc printto log="&user_path.\logfile.log" new;
+ODS HTML5 path="&user_path.\"
+(url=none)
+body="Output_emkf.html";
+run;
+
 /* Define the data library */
 libname sdata "&user_path\eMKF\MKFdata";
 
