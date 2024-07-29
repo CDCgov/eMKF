@@ -9,7 +9,21 @@
  *  The macro is assumed to be saved in a user directory called: ..\eMKF\MKFmacro
  *  The data is assumed to be in user directory: ..\eMKF\MKFdata
  */
+
+options nonotes;
+OPTIONS FORMCHAR="|----|+|---+=|-/\<>*";
+
 %let user_path = \\..; /* Replace \\.. with the applicable path */
+
+/* To output the log and results to a .log and .html file */
+
+ods listing close;
+proc printto log="&user_path.\logfile.log" new;
+ODS HTML5 path="&user_path.\"
+(url=none)
+body="Output_emkf.html";
+run;
+
 
 /* Specify the data library */
 libname sdata "&user_path\eMKF\MKFdata";
@@ -35,11 +49,11 @@ run;
 /* Simulated data provided with the release of the original MKF macro */
 data withgender;
 	length Race $20 Gender$20;
-	label 	Gender =’Gender subset’
-			Race =’Race group surveyed’
-			Year=’Year of the survey’
-			Disease = ’Prevalence of the Disease’
-			SE = ’Prevalence Standard Error’
+	label 	Gender =â€™Gender subsetâ€™
+			Race =â€™Race group surveyedâ€™
+			Year=â€™Year of the surveyâ€™
+			Disease = â€™Prevalence of the Diseaseâ€™
+			SE = â€™Prevalence Standard Errorâ€™
 	;
 	input Gender $ Race $ Year Disease SE @@;
 	datalines;
