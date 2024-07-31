@@ -14,15 +14,14 @@ This project contains the SAS macro to implement the eMKF, emkf_macro.sas, along
 
 ### Running the eMKF macro
 
-<mark><i><b>[include description here of how to run the macro]</i></b></mark>
+
+Please refer to the SAS file Compare-eMKF-to-MKF.sas, in [Testing-and-implementation], for sample/test runs as well as runs that replicate the functionality of the older MKF macro.
 
 ## Related documents
 
-     
 * <mark>[Link to Series 2 report]</mark>
-* <mark>Link to Series 2 report</mark>
-
-
+* <mark>[Link to Series 2 report]</mark>
+* <mark>[Link to Appendix Table II-1 in Guidance report] (Default eMKF macro parameter settings)</mark>
 
 
 ### Outline of methodological differences between eMKF and the original MKF (implemented as of 11-October-2023)
@@ -72,13 +71,14 @@ This project contains the SAS macro to implement the eMKF, emkf_macro.sas, along
      25. eMKF initializes parameters to pass to PROC NLMIXED using the appropriate 'by' group stratum/replication (PROC REG). This differs from MKF where only the first stratum/replication was used to initialize the regression coefficients across strata/replications.
      26. eMKF initializes parameters to pass to PROC NLMIXED using the appropriate degree k polynomial regression (PROC REG), including for k=0. This differs from MKF where for k=0 (dropped), the intercept values were initialized at those from the linear regression y=a+b*t instead of y=a.
      27. For the dropped (k=0) case, eMKF only keeps the column vector of 1s in the X matrix (and subsequent matrix calculations for the MSE). This differs from MKF where both the 1s and ts column were kept in the X matrix.
+     28. The number of groups was limited to 15 in the original MKF due to the use IML function block to create block diagonal matrices in the calculation of MSEs; this was corrected in eMKF to allow an arbitrary number of groups.
 
 * Macro usability
 
-     28. eMKF includes extensive comments and streamlines the code for readability.
-     29. eMKF allows the user additional flexibility in customizing model output and diagnostics, and streamlines the SAS workspace.
-     30. eMKF checks for errors in macro parameter specification, including length of character strings for prefix of output datasets.
-     31. Std. Error label in output table was replaced with RMSE in eMKF to avoid confusion.
+     29. eMKF includes extensive comments and streamlines the code for readability.
+     30. eMKF allows the user additional flexibility in customizing model output and diagnostics, and streamlines the SAS workspace.
+     31. eMKF checks for errors in macro parameter specification, including length of character strings for prefix of output datasets.
+     32. Std. Error label in output table was replaced with RMSE in eMKF to avoid confusion.
 
 
 ### References
