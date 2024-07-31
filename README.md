@@ -14,13 +14,15 @@ This project contains the SAS macro to implement the eMKF, emkf_macro.sas, along
 
 ### Running the eMKF macro
 
+
 Please refer to the SAS file Compare-eMKF-to-MKF.sas, in [Testing-and-implementation], for sample/test runs as well as runs that replicate the functionality of the older MKF macro.
 
 ## Related documents
 
-* [Link to Series 2 report]
-* [Link to Series 2 report]
-* [Link to Appendix Table II-1 in Guidance report] (Default eMKF macro parameter settings)
+* <mark>[Link to Series 2 report]</mark>
+* <mark>[Link to Series 2 report]</mark>
+* <mark>[Link to Appendix Table II-1 in Guidance report] (Default eMKF macro parameter settings)</mark>
+
 
 ### Outline of methodological differences between eMKF and the original MKF (implemented as of 11-October-2023)
 
