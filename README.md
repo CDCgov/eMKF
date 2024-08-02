@@ -30,7 +30,7 @@ Other requirements of the eMKF macro:
   * For quadratic trends, 6 time points are needed.
   * For cubic trends, 7 time points are needed.
 * There should be no missing data for any subgroup. For example, if there were 0 individuals sampled for a given group for one timepoint, analysts will need to aggregate the data over larger time periods or groups to ensure that there are no group-by-time cells without any data/sample.
-* Estimates of 0 are allowed, and SEs are imputed by the macro using the average SE across the non-zero SEs for that group/stratum. However, if estimates and corresponding SEs for a given group are 0 across all timepoints included, analysts should consider aggregating the data into larger groups to ensure that there are some non-zero estimates for all groups/strata. 
+* Estimates of 0 are allowed, but 0 SEs are imputed by the macro using the average SE across the non-zero SEs for that group/stratum. However, if estimates and corresponding SEs for a given group/stratum are 0 across all timepoints included, analysts should consider aggregating the data into larger groups to ensure that there are some non-zero estimates for all groups/strata. As a preliminary solution, the macro will impute such 0 SEs using the average SE across strata for each given timepoint.
 
 Please refer to the documentation provided in <mark>[Link to Series 2 report]</mark> for more details. 
 
@@ -41,7 +41,7 @@ Please refer to the documentation provided in <mark>[Link to Series 2 report]</m
 * <mark>[Link to Appendix Table II-1 in Guidance report] (Default eMKF macro parameter settings)</mark>
 
 
-### Outline of methodological differences between eMKF and the original MKF (implemented as of 11-October-2023)
+### Outline of methodological differences between eMKF (v 1.3) and the original MKF (implemented as of 02-Aug-2024)
 
 * Time points
 
@@ -96,6 +96,7 @@ Please refer to the documentation provided in <mark>[Link to Series 2 report]</m
      30. eMKF allows the user additional flexibility in customizing model output and diagnostics, and streamlines the SAS workspace.
      31. eMKF checks for errors in macro parameter specification, including length of character strings for prefix of output datasets.
      32. Std. Error label in output table was replaced with RMSE in eMKF to avoid confusion.
+     33. Zero SEs and effective sample sizes (when applicable) are imputed using the average across timepoints for the given group and stratum. Any remaining zero SEs and effective sample sizes (when applicable) are imputed timepoint by timepoint using the average across strata for the given group. 
 
 
 ### References
