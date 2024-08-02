@@ -6,7 +6,7 @@
 
 This project contains the SAS code to implement the **enhanced Modified Kalman Filter (eMKF)**. The enhanced MKF procedure enables production of model-based estimates for small populations where direct estimates may lack precision, improving the availability of data for assessing and monitoring health disparities. The enhanced MKF procedure and macro build on the earlier Modified Kalman Filter procedure (Setodji, Lockwood, McCaffrey, Elliott & Adams, 2011) to accommodate nonlinear time trends, irregularly spaced time points, and random sampling variances for the underlying population subgroup means, rates, or proportions. Bayesian estimation in the eMKF macro is implemented adaptably and transparently using PROC MCMC and related SAS 9.4 procedures. Model averaging in the eMKF macro uses a Bayesian mixture prior approach, and renders predictions more robust to polynomial trend misspecification. Various other features in the eMKF macro also improve its functionality, flexibility, and usability relative to the earlier macro; an outline of these improvements is included below. 
 
-This project contains the SAS macro to implement the eMKF, emkf_macro.sas, along with several examples of SAS code to implement the eMKF macro [Testing-and-implementation] with some sample data sets [Sample-data-files]. All data included here are public-use and/or simulated data. 
+This project contains the SAS macro to implement the eMKF, [emkf_macro.sas](emkf_macro.sas), along with several examples of SAS code to implement the eMKF macro in the [Testing-and-implementation](Testing-and-implementation) folder, with some sample data sets included in [Sample-data-files](Sample-data-files). All data included here are public-use and/or simulated data. 
 
 ### Requires
 
@@ -14,8 +14,25 @@ This project contains the SAS macro to implement the eMKF, emkf_macro.sas, along
 
 ### Running the eMKF macro
 
+Sample SAS programs illustrating how to run the eMKF macro are included in [Testing-and-implementation](Testing-and-implementation). 
 
-Please refer to the SAS file Compare-eMKF-to-MKF.sas, in [Testing-and-implementation], for sample/test runs as well as runs that replicate the functionality of the older MKF macro.
+* Please refer to the SAS file [Compare-eMKF-to-MKF.sas](Testing-and-implementation/Compare-eMKF-to-MKF.sas), for sample code to implement the eMKF and replicate the functionality of the older MKF macro.
+* Please refer to the SAS file [Example-eMKF-NHANES-Data.sas](Testing-and-implementation/Example-eMKF-NHANES-Data.sas), for sample code to implement the eMKF to estimate trends in adult obesity prevalence by race/ethnicity using data from the National Health and Nutrition Examination Survey, 1999-March 2020.
+* Please refer to the SAS file [Example-eMKF-Simulated-Mortality-Data.sas](Testing-and-implementation/Example-eMKF-Simulated-Mortality-Data.sas), for sample code to implement the eMKF to estimate trends in mortality rates due to external causes of death by state, age, and race/ethnicity using simulated mortality data from the National Vital Statistics System, 1999-2020.
+
+#### eMKF macro requirements
+
+Input data to the enhanced MKF macro are required to be in stacked (long) format, with each row representing a time- and group-specific estimate. Additional columns required include timepoint and population group identifiers (e.g., racial/ethnic group), standard errors (SE), and (effective) sample sizes for survey data. The variable for timepoint (typically year or survey cycle) must be numeric. A stratification variable can also be included (e.g., age group). 
+
+Other requirements of the eMKF macro:
+* There should be at least *k+4* time points to estimate a degree *k* polynomial trend.
+  * For linear trends, 5 timepoints are needed.
+  * For quadratic trends, 6 time points are needed.
+  * For cubic trends, 7 time points are needed.
+* There should be no missing data for any subgroup. For example, if there were 0 individuals sampled for a given group for one timepoint, analysts will need to aggregate the data over larger time periods or groups to ensure that there are no group-by-time cells without any data/sample.
+* Estimates of 0 are allowed, and SEs are imputed by the macro using the average SE across the non-zero SEs for that group/stratum. However, if estimates and corresponding SEs for a given group are 0 across all timepoints included, analysts should consider aggregating the data into larger groups to ensure that there are some non-zero estimates for all groups/strata. 
+
+Please refer to the documentation provided in <mark>[Link to Series 2 report]</mark> for more details. 
 
 ## Related documents
 
