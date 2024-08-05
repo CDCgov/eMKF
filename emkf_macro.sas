@@ -1,5 +1,5 @@
 /*
- * Latest revision: 10-11-2023
+ * Latest revision: 02-Aug-2024
  *
  * eMKF: Expansion of RAND's MKF macro to:
  *
@@ -11,7 +11,7 @@
  *  - implement Gibbs sampling in PROC MCMC using user defined samplers (UDSs) that are precompiled with PROC FCMP, replacing .exe file (C code).
  *  - expand calculations of between-group disparities at the latest time point in the Bayesian setting.
  *   
- * See README.md file for additional details on methodological differences between eMKF and RAND's MKF.
+ * See README.md file for additional details on methodological differences between this eMKF version and RAND's MKF.
  *
  * Comments and code inserted for the eMKF version in this file are prefixed with *eMKF or otherwise indicated. 
  * All other comments and code are from the developers of the original MKF macro.
@@ -21,17 +21,17 @@
  * Macros defined in this file:
  *
  * - MKF (main) .............................................................. line    41
- * - bayesfit (Bayesian estimation workhorse) ................................ line  3633
- * - bayesBMA (Bayesian model averaging workhorse, via mixture prior) ........ line  4909
- * - htrp (ML-based estimation workhorse) .................................... line  6188
- * - htrp2d (ML-based estimation workhorse for 2 outcomes) ................... line  7682
- * - reformat (set up of dataset for analysis) ............................... line  9651
- * - _counts_, zeros, thevacompr, etc. (various utility macros) .............. line  9991
- * - gibbs_uds_compile_EP (Gibbs sampler for true state predictions) ......... line 10154
- * - gibbs_uds_compile_RP (Gibbs sampler for random sampling variances) ...... line 10236
- * - gibbs_uds_compile_MP (Gibbs samplers for mean hyper-parameters) ......... line 10273
- * - gibbs_uds_compile_CP (Gibbs samplers for regression coefficients) ....... line 10449
- * - gibbs_uds_compile_FP (Gibbs samplers for model flags) ................... line 12598
+ * - bayesfit (Bayesian estimation workhorse) ................................ line  3723
+ * - bayesBMA (Bayesian model averaging workhorse, via mixture prior) ........ line  5013
+ * - htrp (ML-based estimation workhorse) .................................... line  6301
+ * - htrp2d (ML-based estimation workhorse for 2 outcomes) ................... line  7793
+ * - reformat (set up of dataset for analysis) ............................... line  9761
+ * - _counts_, zeros, thevacompr, etc. (various utility macros) .............. line 10188
+ * - gibbs_uds_compile_EP (Gibbs sampler for true state predictions) ......... line 10351
+ * - gibbs_uds_compile_RP (Gibbs sampler for random sampling variances) ...... line 10433
+ * - gibbs_uds_compile_MP (Gibbs samplers for mean hyper-parameters) ......... line 10470
+ * - gibbs_uds_compile_CP (Gibbs samplers for regression coefficients) ....... line 10646
+ * - gibbs_uds_compile_FP (Gibbs samplers for model flags) ................... line 12795
  *
  */
 
@@ -256,7 +256,7 @@ comparedata, comparedto  : (eMKF) options from MKF allowing for estimating dispa
 
 %local _oo1_ _oo2_ ui uii uj uk un um uvar newuvar ug uloc
 	   flag1 flag2 flag3 flag4 flag5 flag6 flag7 flag1f flag2f flag3f flag1a flag2a flag3a 
-	   crep run1 run2 Bayesian _chainseed 
+	   crep run1 run2 run3 Bayesian _chainseed 
        xtrakeep22 toprint toprint2 _ssby _ssn _thekeeps _thekeepsb _thekeep1 /*_thekeep1a*/ _thekeep1b _thekeep2 _thekeep3 _thet 
 	   emkfkeep emkfrename _BMAmodel _slopes _rtimess pmds a_pmds pm _pm _igrp_ _t_ _comp2;
 
@@ -266,6 +266,26 @@ comparedata, comparedto  : (eMKF) options from MKF allowing for estimating dispa
 	proc iml;
 		print "  Error Note:";
 		print "  Please specify a non-empty prefix (out=&out) that is no longer than 16 characters in length";
+	quit;
+	%return;
+%end;
+
+/* eMKF: Added error check for the length of &outcome variable name */
+%if &outcome = %str() or %length(&outcome) > 18 %then %do;
+	%put ERROR: Please specify a non-empty variable name for outcome (&outcome) that is no longer than 18 characters in length;
+	proc iml;
+		print "  Error Note:";
+		print "  Please specify a non-empty variable name for outcome (&outcome) that is no longer than 18 characters in length";
+	quit;
+	%return;
+%end;
+
+/* eMKF: Added error check for the length of &outcome2 variable name (if applicable) */
+%if &outcome2 ^= %str() and %length(&outcome2) > 18 %then %do;
+	%put ERROR: Please specify a variable name for outcome2 (&outcome2) that is no longer than 18 characters in length;
+	proc iml;
+		print "  Error Note:";
+		print "  Please specify a variable name for outcome2 (&outcome2) that is no longer than 18 characters in length";
 	quit;
 	%return;
 %end;
@@ -288,7 +308,7 @@ comparedata, comparedto  : (eMKF) options from MKF allowing for estimating dispa
 		%let uvar=%scan(&slopes, &ui);
 		%if %upcase(&uvar) ^=INDEP_CUBIC and %upcase(&uvar) ^=INDEP_QUAD and %upcase(&uvar) ^=INDEP_LINEAR and 
     		%upcase(&uvar) ^=COMMON_CUBIC and %upcase(&uvar) ^=COMMON_QUAD and %upcase(&uvar) ^=COMMON_LINEAR and %upcase(&uvar) ^=DROPPED %then %do;
-				%put Error: &uvar is not a supported ML model specification. Model(s) must be one (or more) of indep_cubic, indep_quad, indep_linear, common_cubic, common_quad, common_linear, or dropped;
+				%put ERROR: &uvar is not a supported ML model specification. Model(s) must be one (or more) of indep_cubic, indep_quad, indep_linear, common_cubic, common_quad, common_linear, or dropped;
 				proc iml;
 					print "  Error Note:";
 					print "  Specified ML model(s) not supported. Model(s) must be one (or more) of indep_cubic, indep_quad, indep_linear, common_cubic, common_quad, common_linear, or dropped. ";
@@ -310,7 +330,7 @@ comparedata, comparedto  : (eMKF) options from MKF allowing for estimating dispa
 			%upcase(&uvar) ^=FULL_CUBIC and %upcase(&uvar) ^=FULL_QUAD and %upcase(&uvar) ^=FULL_LINEAR and 
 			%upcase(&uvar) ^=INDEP_CUBIC and %upcase(&uvar) ^=INDEP_QUAD and %upcase(&uvar) ^=INDEP_LINEAR and 
     		%upcase(&uvar) ^=COMMON_CUBIC and %upcase(&uvar) ^=COMMON_QUAD and %upcase(&uvar) ^=COMMON_LINEAR and %upcase(&uvar) ^=DROPPED %then %do;
-			%put Error: &uvar is not a supported Bayesian model specification. Model(s) must be one (or more) of bma_cubic, bma_quad, bma_linear, full_cubic, full_quad, full_linear, indep_cubic, indep_quad, indep_linear, common_cubic, common_quad, common_linear, or dropped;
+			%put ERROR: &uvar is not a supported Bayesian model specification. Model(s) must be one (or more) of bma_cubic, bma_quad, bma_linear, full_cubic, full_quad, full_linear, indep_cubic, indep_quad, indep_linear, common_cubic, common_quad, common_linear, or dropped;
 			proc iml;
 				print "  Error Note:";
 				print "  Specified Bayesian model(s) not supported. Model(s) must be one (or more) of bma_cubic, bma_quad, bma_linear, full_cubic, full_quad, full_linear, indep_cubic, indep_quad, indep_linear, common_cubic, common_quad, common_linear, or dropped. ";
@@ -321,7 +341,7 @@ comparedata, comparedto  : (eMKF) options from MKF allowing for estimating dispa
 %end;
 %else %let Bayesian = No; /* eMKF: Added to allow for Bayes approach to be explicitly disabled */
 
-/*eMKF: Set up &by variable name _reps, e.g., for use in calls to HTRP and HTRP2D */
+/*eMKF: Set up internal &by variable name _reps, e.g., for use in calls to HTRP and HTRP2D */
 %let _ssby=;
 %if &by ^=%str() %then %let _ssby=_reps;
 
@@ -379,7 +399,7 @@ run;
 /*eMKF: reformat data if needed and calculate variables needed for processing */
 %if %upcase(&Bayesian) = YES and %upcase(&randomVars) = YES %then %do;
 	%if &neff = %str() %then %do; /*eMKF: if no effective sample sizes were provided, return an error */
-		%put Error: (Effective) sample sizes neff must be specified to fit random sampling variances;
+		%put ERROR: (Effective) sample sizes neff must be specified to fit random sampling variances;
 		proc iml;
 			print "  Error Note:";
 			print "  (Effective) sample sizes neff must be specified to fit random sampling variances. ";
@@ -405,56 +425,61 @@ run;
 /*eMKF: Added columns with new variables instead of re-naming, as original MKF code was re-creating generic variables _y, _time, etc. */
 
 /*eMKF: Create copies of _group_ and _rep variables for use in proc iml matrix calculations */
-data _nlmixdata_; 
-  set _bayesdata_; 
-  _groupnum = _group_; 
-  %if &by ^=%str() %then _reps	= _rep;; 
+%if %upcase(&Bayesian) ^= YES %then %do;
+    data _nlmixdata_; 
+      set _bayesdata_; 
+      _groupnum = _group_; 
+      %if &by ^=%str() %then _reps	= _rep;; 
+    run;
+%end;
+
+/* eMKF: Datasets to check number of time points and groups are consistent within and across strata */
+data _junk_ _freq1_ _freq2_ _freq3_;
 run;
 
-/* eMKF: Datasets to check number of time points and groups are consistent across groups */
-data _junk_ _freq1_ _freq2_;
-run;
+/* eMKF: Original RAND macro assumed < 10 groups and timepoints. This implementation allows up to 9999 groups, timepoints, and strata. */
 data _junk_;
   set _bayesdata_;
-  _name_= compress(_rep || _group_ || _time);
+  _rep0000 = put(_rep, z4.);
+  _group0000_ = put(_group_, z4.);
+  _time0000 = put(_time, z4.);
+  _name_= compress(_rep0000 || _group0000_ || _time0000); /*eMKF: format with leading zeroes for correct sort order */
   if _y=. then delete;
   if _se=. then delete;
-  %if %scan(&outcome2,1) ^=%str() and %scan(&se2,1) ^=%str() %then if _y2=.  then delete; ;;;
-  %if %scan(&outcome2,1) ^=%str() and %scan(&se2,1) ^=%str() %then if _se2=. then delete; ;;;
+  %if %scan(&outcome2,1) ^=%str() and %scan(&se2,1) ^=%str() %then if _y2=.  then delete;;;
+  %if %scan(&outcome2,1) ^=%str() and %scan(&se2,1) ^=%str() %then if _se2=. then delete;;;
+  drop _rep0000 _group0000_ _time0000;
 run;
+
 proc freq data=_junk_ noprint;
   tables _group_ /list out=_freq1_(rename=(count=ntime));
-  %if &by ^=%str() %then by &by;;;
+  %if &by ^=%str() %then by &by;;
 run;
 proc freq data=_junk_ noprint;
   tables _time /list out=_freq2_(rename=(count=ngroup));
-  %if &by ^=%str() %then by &by;;;
+  %if &by ^=%str() %then by &by;;
 run;
 
 /*eMKF: added if-clause to avoid creating dataset _finalprint_ if it remains unused */
 %if %upcase(&finalprint) = YES %then %do; 
 
-	/*eMKF: system options for correct SAS monospace font in printed tables*/
-	options formchar="|----|+|---+=|-/\<>*"; 
+	options formchar="|----|+|---+=|-/\<>*"; /*eMKF: system options for correct SAS monospace font in printed tables*/
 
 	data _finalprint_;
 	run;
-
 	data _finalprint_;
 	  set _freq2_;
 	  _rp_=1;
 	run;
-
 	data _finalprint_;
 	  set _finalprint_;
 	  keep=0;
-	  %if &by ^=%str() %then by &by _time;;;
-	  %if &by  =%str() %then by _rp_ _time;;;
-	  %if &by ^=%str() %then if last.&by and last._time then keep=1 ; ;;;
-	  %if &by  =%str() %then if last._rp_ and last._time then keep=1 ; ;;;
+	  %if &by ^=%str() %then by &by _time;;
+	  %if &by  =%str() %then by _rp_ _time;;
+	  %if &by ^=%str() %then if last.&by and last._time then keep=1;;;
+	  %if &by  =%str() %then if last._rp_ and last._time then keep=1;;;
 	  drop _rp_;
 	run;
-
 	data _finalprint_;
 	  set _finalprint_;
 	  if keep=1;
@@ -466,20 +491,18 @@ run;
 proc sort data=_freq1_ nodupkey;
   by &by ntime;
 run;
-
 proc sort data=_freq2_ nodupkey;
   by &by ngroup;
 run;
-
 data _freq1_;
   merge _freq1_ _freq2_;
-  %if &by ^=%str() %then by &by;;;
+  %if &by ^=%str() %then by &by;;
   drop _group_ _time percent;
 run;
 
 data _freq1_;
   set _freq1_;
-  %if &by ^=%str() %then by &by;;;
+  %if &by ^=%str() %then by &by;;
   %if &by ^=%str() %then if first.&by then id =0;;;
   stop=0;
   id +1;
@@ -487,12 +510,10 @@ run;
 
 data _freq2_;
 run;
-
 data _freq2_;
   set _freq1_;
   if id=1;
 run;
-
 data _freq1_;
   set _freq1_;
   stop=1;
@@ -502,10 +523,9 @@ run;
 proc sort data= _freq1_ nodupkey;
   by &by id;
 run;
-
 data _freq2_;
   merge _freq2_ _freq1_(drop=id);
-  %if &by ^=%str() %then by &by;;;
+  %if &by ^=%str() %then by &by;;
 run;
 
 %let run1=0; %let run2=0;
@@ -517,12 +537,59 @@ data _null_;
   if stop ne 1 then call symput("run2" , one);
 run;
 
-/* eMKF: resolved error in RAND macro that caused incorrect flag when 10+ groups and 10+ time points were included */
 %let run1= %eval(&run1 +0);
+
+%if &run1=0 %then %do;
+  /* This is a double precaution to make sure that someone did not forget to specify &by */
+  proc sort data=_junk_;
+     by _name_;
+  run;
+  data _junk_;
+    set _junk_;
+    by _name_;
+    if first._name_ then _id=0;
+    _id+1;
+    _one=1;
+    if _id =2 then call symput("run1" , _one);
+  run;
+  %let run1= %eval(&run1 +0);
+%end;
+
+%if &by ^= %str() and &run1 = 0 %then %do;
+  /* eMKF: Another precaution to ensure groups and timepoints are consistent across &by strata */
+  %let run3 = 0;
+  proc freq data=_freq2_ noprint;
+    tables ngroup /list out=_freq3_;
+  run;
+  data _freq3_;
+	set _freq3_;
+	stop = 0;
+	_ng_ + 1;
+    if _ng_ > 1 then stop = 1;
+	call symput("run3", stop);
+  run;
+  %let run3= %eval(&run3 +0);
+
+  %if &run3 = 0 %then %do;
+    proc freq data=_freq2_ noprint;
+      tables ntime /list out=_freq3_;
+    run;
+    data _freq3_;
+	  set _freq3_;
+	  stop = 0;
+	  _nt_ + 1;
+	  if _nt_ > 1 then stop = 1;
+	  call symput("run3", stop);
+    run;
+  %end;
+
+  %let run1= %eval(&run3 +0);
+%end;
+
 %let run2= %eval(&run2 +0);
 
 proc datasets nolist;
-  delete _junk_ _freq1_ _freq2_ ;
+  delete _junk_ _freq1_ _freq2_ _freq3_;
 run ;
 
 %if &run1=0 and &run2=0 %then %do;
@@ -535,25 +602,26 @@ run ;
 %end;
 
 %if &run1=1 and &run2=0 %then %do;
-	%put ERROR: Please check your data. The data does not have the same number of times for each group;
+	%put ERROR: Please check your data. The number of valid timepoints is inconsistent across groups;
 	proc iml;
 	  print "  Error Note:";
 	  print "  An error occurred with your data. ";
-	  print "    Check the data and make sure that there are no missing value for means or SEs and  ";
-	  print "    that all the groups have data for the same number of &time(time).  ";
+	  print "    Check the data to make sure there are no missing values for means/SEs or only zero SEs,  ";
+	  print "    and that all the groups have data for the same number of timepoints (&time).  ";
+	  print "  You may need to combine some groups and/or timepoints to avoid this problem.  ";
 	quit;
 	%return; /*eMKF: added return functionality for easier debugging*/
 %end;
 
 %if &run1=1 and &run2=1 %then %do;
-	%put ERROR: Please check your data. The data does not have the same number of times for each group;
-	%put ERROR: It looks like you are doing subgroup analysis and this problem occurred in at least one subgroup;
+	%put ERROR: Please check your data. The number of valid timepoints is inconsistent across groups and strata;
+	%put ERROR- This problem occurred in at least one subgroup.;
 	proc iml;
 	  print "  Error Note:";
 	  print "  An error occurred with your data. ";
-	  print "    Check the data and make sure that there are no missing value for means or SEs and  ";
-	  print "    that all the groups have data for the same number of &time(time).  ";
-	  print "    It looks like you are doing subgroup (&group) analysis and this problem occurred in at least one subgroup  ";
+	  print "    Check the data to make sure there are no missing values for means/SEs or only zero SEs,  ";
+	  print "    and that all the groups and strata have data for the same number of timepoints (&time).  ";
+	  print "  You may need to combine some groups and/or timepoints to avoid this problem.  ";
 	quit;
 	%return; /*eMKF: added return functionality for easier debugging*/
 %end;
@@ -569,12 +637,11 @@ run ;
 	%if &ug =0 %then %let run1=1;
 	%if &ug =0 %then %do;
 		%put ERROR: Please check your data. You are using two outcomes &outcome and &outcome2;
-		%put ERROR: Those outcomes or their standard errors should be of the same format. Check that and rerun the model;
+		%put ERROR- Those outcomes or their standard errors should be of the same format. Check that and rerun the model;
 		proc iml;
 		  print "  Error Note:";
 		  print "  An error occurred with your data. ";
-		  print "    Check the data and make sure that both outcomes and SEs are in the same format.  ";
-		  print "    It looks like you are using different formats and that will not work.  ";
+		  print "    Check the data to make sure that both outcomes and SEs are in the same format.  ";
 		quit;
 		%return; /*eMKF: added return functionality for easier debugging*/
 	%end;
@@ -584,8 +651,7 @@ run ;
 
 	/* Setting up the number of time points and the number of groups */
 
-	/* eMKF: Number of groups */
-	%let ug=0;
+	%let ug=0; /* eMKF: Number of groups */
 	data _freqg_;
 	run;
 	proc freq data=&data noprint;
@@ -599,8 +665,7 @@ run ;
 	run;
 	%let ug= %eval(0 + &ug);
 
-	/*eMKF: Macro variable for the number of time points */
-	%let un=0; 
+	%let un=0;  /*eMKF: Macro variable for the number of time points */
 	data _freqn_;
 	run;
 	proc freq data=_bayesdata_ noprint;
@@ -614,8 +679,7 @@ run ;
 	run;
 	%let un= %eval(0 + &un);
 
-	/*eMKF: Macro variable for the real times to use in calculations */
-	%let _rtimess = ;
+	%let _rtimess = ; /*eMKF: Macro variable for the real times to use in calculations */
 	data _freqn_;
 	  set _freqn_;
 	  retain _rts;
@@ -730,6 +794,7 @@ run ;
 
 			%let xtrakeep22=;
 			%let xtrakeep22= &xtrakeep &outcome &se &group &time impute inputorder &by;
+			%if &by ^=%str() %then %let xtrakeep22= &xtrakeep22 imputeb;
 			%let toprint2=&slopes;
 
 			/* eMKF: Simplified suffix assignment */
@@ -827,22 +892,25 @@ run ;
 
 			%let _slopes = &slopes;
 
-			%if &flag5 = 1 and &flag3 = 1 and &flag6 ^= 1 and &flag7 ^= 1 %then %do;				
-				%put Note: Both the common_quad and indep_linear models were specified with no shared descendant. Adding the common_linear model...;
+			%if &flag5 = 1 and &flag3 = 1 and &flag6 ^= 1 and &flag7 ^= 1 %then %do;
+                %put ;	
+				%put Both the common_quad and indep_linear models were specified with no shared descendant. Adding the common_linear model...;
 			  	%let _slopes = &_slopes common_linear;
 				%let flag6 = 1;
 				%put &slopes;
 				%put &_slopes;
 			%end;
             %if &flag4 = 1 and &flag3 = 1 and &flag6 ^= 1 and &flag7 ^= 1 %then %do;
-				%put Note: Both the common_cubic and indep_linear models were specified with no shared descendant. Adding the common_linear model...;
+			    %put ;	
+				%put Both the common_cubic and indep_linear models were specified with no shared descendant. Adding the common_linear model...;
 			  	%let _slopes = &_slopes common_linear;
 				%let flag6 = 1;
 				%put &slopes;
 				%put &_slopes;
 			%end;
             %if &flag4 = 1 and &flag2 = 1 and &flag5 ^= 1 and &flag6 ^= 1 and &flag7 ^= 1 %then %do;				
-				%put Note: Both the common_cubic and indep_quad models were specified with no shared descendant. Adding the common_quad model...;
+			    %put ;	
+				%put Both the common_cubic and indep_quad models were specified with no shared descendant. Adding the common_quad model...;
 			  	%let _slopes = &_slopes common_quad;
 				%let flag5 = 1;
 				%put &slopes;
@@ -939,6 +1007,7 @@ run ;
 
 				%let xtrakeep22=;
 				%let xtrakeep22= &xtrakeep &outcome &se &group &time impute inputorder &by;
+				%if &by ^=%str() %then %let xtrakeep22= &xtrakeep22 imputeb;
 
 				%if %scan(&outcome2,1) ^=%str() and %scan(&se2,1) ^=%str() %then %let xtrakeep22= &xtrakeep22 &outcome2 &se2;;
 
@@ -1450,7 +1519,7 @@ run ;
 	/* Estimate the Bayesian model(s)*/
 	/*********************************/
 
-	%if %upcase(&Bayesian)=YES %then %do;
+	%if %upcase(&Bayesian) = YES %then %do;
 
 		/* eMKF: Total number of Bayesian models requested */
 		%let uii = %_counts_(&Bayesmodel);
@@ -1546,38 +1615,44 @@ run ;
 		%let _BMAmodel = ;
 		%if &BayesmodelAvg = %str() %then %let BayesmodelAvg = NO;
 		%if %upcase(&BayesmodelAvg) = YES and (&flag1f = 1 or &flag2f = 1 or &flag3f = 1) %then %do;
-			%put Note: Because a fully Bayesian model was requested, no model averaging will be applied;;
+		    %put ;
+			%put Because a fully Bayesian model was requested, no model averaging will be applied;;
 			%let BayesmodelAvg = NO;
 		%end;
 		%if %upcase(&BayesmodelAvg) = YES and &flag1a ^= 1 and &flag2a ^= 1 and &flag3a ^= 1 and &uii = 1 %then %do;
-			%put Note: Because only one Bayesian model was specified, no model averaging will be applied;;
+		    %put ;
+			%put Because only one Bayesian model was specified, no model averaging will be applied;;
 			%let BayesmodelAvg = NO;
 		%end;
-		%if &flag1a = 1 or ((&flag1 = 1 or &flag4 = 1) and (&BayesmodelAvg = YES)) %then %do;				
-			%if %upcase(&BayesmodelAvg) = YES %then %put Note: Because a cubic trend model was requested, all possible models up to cubic will be included in Bayesian model averaging;;
+		%if &flag1a = 1 or ((&flag1 = 1 or &flag4 = 1) and (&BayesmodelAvg = YES)) %then %do;
+		    %put ;	
+			%if %upcase(&BayesmodelAvg) = YES %then %put Because a cubic trend model was requested, all possible models up to cubic will be included in Bayesian model averaging;;
 			%let _BMAmodel = BMA_CUBIC;
 			%let flag1a = 1;
 			%let BayesmodelAvg = YES;
 		%end;
 		%if &flag1a ^= 1 and &flag1f ^= 1 and &flag1 ^= 1 and &flag4 ^= 1 and 
-			(&flag2a = 1 or ((&flag2 = 1 or &flag5 = 1) and (&BayesmodelAvg = YES))) %then %do;				
-			%if %upcase(&BayesmodelAvg) = YES %then %put Note: Because a quadratic trend model was requested, all possible models up to quadratic will be included in Bayesian model averaging;;
+			(&flag2a = 1 or ((&flag2 = 1 or &flag5 = 1) and (&BayesmodelAvg = YES))) %then %do;
+		    %put ;	
+			%if %upcase(&BayesmodelAvg) = YES %then %put Because a quadratic trend model was requested, all possible models up to quadratic will be included in Bayesian model averaging;;
 			%let _BMAmodel = BMA_QUAD;
 			%let flag2a = 1;
 			%let BayesmodelAvg = YES;
 		%end;
 		%if &flag1a ^= 1 and &flag1f ^= 1 and &flag1 ^= 1 and &flag4 ^= 1 and 
 			&flag2a ^= 1 and &flag2f ^= 1 and &flag2 ^= 1 and &flag5 ^= 1 and 
-			(&flag3a = 1 or ((&flag3 = 1 or &flag6 = 1) and (&BayesmodelAvg = YES))) %then %do;				
-			%if %upcase(&BayesmodelAvg) = YES %then %put Note: Because a linear trend model was requested, all possible models up to linear will be included in Bayesian model averaging;;
+			(&flag3a = 1 or ((&flag3 = 1 or &flag6 = 1) and (&BayesmodelAvg = YES))) %then %do;		
+		    %put ;	
+			%if %upcase(&BayesmodelAvg) = YES %then %put Because a linear trend model was requested, all possible models up to linear will be included in Bayesian model averaging;;
 			%let _BMAmodel = BMA_LINEAR;
 			%let flag3a = 1;
 			%let BayesmodelAvg = YES;
 		%end;
 		%if &flag1a ^= 1 and &flag1f ^= 1 and &flag1 ^= 1 and &flag4 ^= 1 and 
 			&flag2a ^= 1 and &flag2f ^= 1 and &flag2 ^= 1 and &flag5 ^= 1 and 
-			&flag3a ^= 1 and &flag3f ^= 1 and &flag3 ^= 1 and &flag6 ^= 1 %then %do;				
-			%if %upcase(&BayesmodelAvg) = YES %then %put Note: Because no trend model was requested, an intercepts-only model will be fit;;
+			&flag3a ^= 1 and &flag3f ^= 1 and &flag3 ^= 1 and &flag6 ^= 1 %then %do;		
+		    %put ;	
+			%if %upcase(&BayesmodelAvg) = YES %then %put Because no trend model was requested, an intercepts-only model will be fit;;
 			%let _BMAmodel = DROPPED;
 			%let flag7 = 1;
 			%let BayesmodelAvg = NO;
@@ -1645,7 +1720,7 @@ run ;
 		%if &flag3a = 1 			  %then %gibbs_uds_compile_FP(uvar=bma_linear,    g=&ug, n=&un, loc=&cmploc);; 
 
 		/* eMKF: Start model fitting loop(s) (tuning loop from original MKF is now incorporated in the call to proc mcmc) */
-		%put Start model fitting loop(s) using PROC MCMC; 
+		%put Start model fitting loop(s) via PROC MCMC; 
 
 		/* eMKF: to avoid larger dataset size than necessary, initialize one posterior log file per replication */
 		data _bayesdata1_ &out._bayes &out._bayesparm &out._bayeslogGR ;
@@ -2291,8 +2366,8 @@ run ;
 				/* eMKF: Issue warning message for poor mixing */
 				%if &uk = 0 %then %do;
 					%put WARNING: Gelman-Rubin diagnostics at the threshold &GRthreshold suggest poor mixing with &chains chains;
-					%put WARNING: Model predictions may be unreliable based on this threshold value: see dataset &out._bayeslogGR_ ;
-					%put WARNING: Consider investigating the chain-specific diagnostic plots and modifying the MCMC options ;
+					%put WARNING- Model predictions may be unreliable based on this threshold value: see dataset &out._bayeslogGR_ ;
+					%put WARNING- Consider investigating the chain-specific diagnostic plots and modifying the MCMC options ;
 
 					proc iml;
 					  print " Warning: Gelman-Rubin diagnostics at the threshold &GRthreshold suggest poor mixing with &chains chains";
@@ -2853,10 +2928,10 @@ run ;
 			run;
 
 			%if &_comp2 = %str() and %upcase(&_comp2) ^= MIN and %upcase(&_comp2) ^= MAX %then %do;
-				%put Warning: The comparison group &comparedto is not a &group or a recognized reference value;
-				%put          Check to make sure the value &comparedto is correct. ;
-				%put          No comparison will be printed at this point.;
-				%put		  All comparisons could be found in the &out._bayes data. ;
+				%put WARNING: The comparison group &comparedto is not a &group or a recognized reference value;
+				%put WARNING- Check to make sure the value &comparedto is correct. ;
+				%put WARNING- No comparison will be printed at this point.;
+				%put WARNING- All comparisons could be found in the &out._bayes data. ;
 			%end;
 
 			proc datasets nolist;
@@ -2892,7 +2967,10 @@ run ;
 			  _thekey = 1;
 			  rename &_thekeep1b;;
 			  drop _avgse _y _se &outcome &se &outcome2 &se2 impute _diffgrp2_ _oldtime _newtime /*multiplier*/ predvar_Bayes_: 
-				   %if %upcase(&randomVars) = YES %then _avgn _n;;
+			       %if &by ^=%str() %then _avgseb imputeb;
+				   %if %upcase(&randomVars) = YES %then _avgn _n;
+				   %if %upcase(&randomVars) = YES and &by ^=%str() %then _avgnb;
+              ;
 			run;
 
 			data _junk_;
@@ -3008,11 +3086,17 @@ run ;
 			&out._pred(keep= _rep)
 		    &out._pred(keep= _group_ _time _rtime) 
 	        &out._pred(keep= _y _se %if %scan(&outcome2,1) ^=%str() and %scan(&se2,1) ^=%str() %then _y2 _se2; ) 
-	        &out._pred(keep= _avgse %if %scan(&outcome2,1) ^=%str() and %scan(&se2,1) ^=%str() %then _avgse2; )
+	        &out._pred(keep= _avgse 
+                             %if &by ^=%str() %then _avgseb; 
+                             %if %scan(&outcome2,1) ^=%str() and %scan(&se2,1) ^=%str() %then _avgse2; 
+                             %if %scan(&outcome2,1) ^=%str() and %scan(&se2,1) ^=%str() and &by ^=%str() %then _avgse2b; )
 			%if %upcase(&randomVars) = YES and %upcase(&Bayesian)=YES %then %do;
-				&out._pred(keep= _n _avgn %if %scan(&outcome2,1) ^=%str() and %scan(&se2,1) ^=%str() %then _n2 _avgn2; )
+				&out._pred(keep= _n _avgn 
+                                 %if &by ^=%str() %then _avgnb;
+                                 %if %scan(&outcome2,1) ^=%str() and %scan(&se2,1) ^=%str() %then _n2 _avgn2;
+                                 %if %scan(&outcome2,1) ^=%str() and %scan(&se2,1) ^=%str() and &by ^=%str() %then _avgn2b; )
 			%end;
-	        &out._pred(keep= impute inputorder)
+	        &out._pred(keep= impute inputorder %if &by ^=%str() %then imputeb;)
 			&out._pred(keep= pred:) 
 			%if %upcase(&toprint2) = MODELAVG %then &out._pred(keep= p:);
 		;
@@ -3020,6 +3104,7 @@ run ;
 
 	/* eMKF: added functionality to remind the user about the predictions dataset if not tabulated */
 	%if %upcase(&finalprint) ^= YES %then %do;
+	    %put ;
 		%put Tabulated printout of MKF predictions for the last time point was turned off by the user;
 		%put Model predictions are in dataset &out._pred;
 	%end;
@@ -3072,8 +3157,9 @@ run ;
 		  %if %upcase(&Bayesian)^= YES %then final_se=predSE_&toprint2 ;;
 		  %if %scan(&outcome2,1) ^=%str() and %scan(&se2,1) ^=%str() %then final_pred2=pred2_&toprint2 ;;
 		  %if %scan(&outcome2,1) ^=%str() and %scan(&se2,1) ^=%str() %then final_se2=pred2SE_&toprint2 ;;  
-		  keep &by &group _group_ _time &time _y _se final_pred final_se inputorder impute
-		       %if %scan(&outcome2,1) ^=%str() and %scan(&se2,1) ^=%str() %then  final_pred2 final_se2  _y2 _se2 ;;;
+		  keep &by &group _group_ _time &time _y _se final_pred final_se inputorder impute 
+               %if &by ^=%str() %then imputeb;
+		       %if %scan(&outcome2,1) ^=%str() and %scan(&se2,1) ^=%str() %then  final_pred2 final_se2  _y2 _se2 ;
 		  ;
 		run;
 
@@ -3527,7 +3613,9 @@ run ;
 			   if _i_=5 and firstp  = 1 and prediction ge 0 then put &nname5a;
 			   if _i_=5 and firstp ne 1 and prediction ge 0 then put &nname6a;
 		   %end;
-		   if last.inputorder and impute=1 then put "   Warning:  For this group, user supplied SE=0 were set to average of nonzero values";
+		   if last.inputorder and impute=1 then put "   Warning:  For this group, user supplied SE=0 were set to average of nonzero values across timepoints";
+		   %if &by ^=%str() %then 
+             if last.inputorder and imputeb=1 then put "   Warning:  For this group, user supplied SE=0 were set to average of nonzero values across strata";;;
 
 		   /*eMKF: added if-clauses to correct warnings in original MKF macro */
 		   %if &comparedto ^=%str() and %upcase(&Bayesian)  = YES %then %do;
@@ -3621,7 +3709,7 @@ run;
 
 /* eMKF: clean up */		
 proc datasets nolist;
-  delete _nlmixdata_ _bayesdata_ ;
+  delete %if %upcase(&Bayesian) ^= YES %then _nlmixdata_; _bayesdata_ ;
 run ;
 quit;
 
@@ -3739,7 +3827,7 @@ run;
        parline aparline vparline mbparline sbparline udsparline tauparline2 psiparline2 sbparline2
        plinea plineb1 plineb2 plineb3 plinev plinetau plinepsi 
        hplinemb1 hplinesb1 hplinemb2 hplinesb2 hplinemb3 hplinesb3 hplinempsi hplinespsi
-	   initlinea initlineb1 initlineb2 initlineb3 initetamnarr initlinevarr initlinetau initlinepsi
+	   initlinea initlineb1 initlineb2 initlineb3 initlinevarr initlinetau initlinepsi
 	   initlinemb1 initlinemb2 initlinemb3 initlinesb1 initlinesb2 initlinesb3 
        monitorline optionline udsline rcXline rcNline initmbeta Narrline;
 
@@ -3764,9 +3852,10 @@ run;
 	run;
 %end;
 %else %do;
+    %put ;
 	%put Reformatting data prior to Bayesian estimation;
 	%if %upcase(&brndvars) = YES and &bn = %str() %then %do;
-		%put Error: (Effective) sample sizes bn must be specified to fit random sampling variances;
+		%put ERROR: (Effective) sample sizes bn must be specified to fit random sampling variances;
 		proc iml;
 			print "  Error Note:";
 			print "  (Effective) sample sizes bn must be specified to fit random sampling variances. ";
@@ -3861,9 +3950,9 @@ run;
 	  y = T(do(1, &n, 1));				/* eMKF: column vector of consecutive time indices */
 	  yP = y || oP;
 	  create _oXmat_ from yP [ colname = {"_time" "&brtm.0" "&brtm.1" "&brtm.2" "&brtm.3"} ] ;
-	  append from yP;
+	  append from yP; close _oXmat_;
 	  create _oPmat_ from oPP [ colname = {"t0" "t1" "t2" "t3"} ] ;
-	  append from oPP;
+	  append from oPP; close _oPmat_;
 	quit;
 
 	proc sort data=_bbdata_;
@@ -4284,54 +4373,60 @@ run;
 	%let initlineb1 = b1 = &bmbeta1 + sqrt(1/&bpbeta1)*rand('normal') ;
 
 /* eMKF: Initial values for unobserved true states predictions given regression parameters */
-%let initetamnarr = ; 
 %let _i = 0; %let _j = 0; 
 %if %upcase(&btype) = FULL_CUBIC or %upcase(&btype) = INDEP_CUBIC %then %do;
   %do _i = 1 %to &g; 
   	%do _j = 1 %to &n; 
-	  %let initetamnarr=&initetamnarr etamnarr[%eval((&_i-1)*&n+&_j)] =X[&_j,1]*a&_i +X[&_j,2]*b1arr&_i +X[&_j,3]*b2arr&_i +X[&_j,4]*b3arr&_i %str(;);
+	  %local initetamnarr&_j._&_i;   /*eMKF: broken up into many macro variables instead of single one to avoid max length error (65534) */
+	  %let initetamnarr&_j._&_i = etamnarr[%eval((&_i-1)*&n+&_j)] = X[&_j,1]*a&_i +X[&_j,2]*b1arr&_i +X[&_j,3]*b2arr&_i +X[&_j,4]*b3arr&_i ;
 	%end;
   %end;
 %end;
 %if %upcase(&btype) = FULL_QUAD or %upcase(&btype) = INDEP_QUAD %then %do;
 	%do _i = 1 %to &g; 
   		%do _j = 1 %to &n; 
-	  		%let initetamnarr = &initetamnarr etamnarr[%eval((&_i-1)*&n + &_j)] = X[&_j,1]*a&_i + X[&_j,1]*b1arr&_i + X[&_j,2]*b2arr&_i %str(;) ;
+			%local initetamnarr&_j._&_i;
+	  		%let initetamnarr&_j._&_i = etamnarr[%eval((&_i-1)*&n + &_j)] = X[&_j,1]*a&_i + X[&_j,1]*b1arr&_i + X[&_j,2]*b2arr&_i ;
 		%end;
 	%end;
 %end;
 %if %upcase(&btype) = FULL_LINEAR or %upcase(&btype) = INDEP_LINEAR %then %do;
 	%do _i = 1 %to &g; 
   		%do _j = 1 %to &n; 
-			%let initetamnarr = &initetamnarr etamnarr[%eval((&_i-1)*&n + &_j)] = X[&_j,1]*a&_i + X[&_j,2]*b1arr&_i %str(;) ;
+		    %local initetamnarr&_j._&_i;
+			%let initetamnarr&_j._&_i = etamnarr[%eval((&_i-1)*&n + &_j)] = X[&_j,1]*a&_i + X[&_j,2]*b1arr&_i ;
 		%end;
 	%end;
 %end;
 %if %upcase(&btype) = COMMON_CUBIC %then %do;
 	%do _i = 1 %to &g; 
   		%do _j = 1 %to &n; 
-	  %let initetamnarr=&initetamnarr etamnarr[%eval((&_i-1)*&n+&_j)] = X[&_j,1]*a&_i + X[&_j,2]*b1 + X[&_j,3]*b2 + X[&_j,4]*b3 %str(;);
+		    %local initetamnarr&_j._&_i;
+	        %let initetamnarr&_j._&_i = etamnarr[%eval((&_i-1)*&n+&_j)] = X[&_j,1]*a&_i +X[&_j,2]*b1 +X[&_j,3]*b2 +X[&_j,4]*b3 ;
 		%end;
 	%end;
 %end;
 %if %upcase(&btype) = COMMON_QUAD %then %do;
 	%do _i = 1 %to &g; 
   		%do _j = 1 %to &n; 
-	  		%let initetamnarr = &initetamnarr etamnarr[%eval((&_i-1)*&n + &_j)] = X[&_j,1]*a&_i + X[&_j,1]*b1 + X[&_j,2]*b2 %str(;) ;
+		    %local initetamnarr&_j._&_i;
+	        %let initetamnarr&_j._&_i = etamnarr[%eval((&_i-1)*&n+&_j)] = X[&_j,1]*a&_i +X[&_j,2]*b1 +X[&_j,3]*b2 ;
 		%end;
 	%end;
 %end;
 %if %upcase(&btype) = COMMON_LINEAR %then %do;
 	%do _i = 1 %to &g; 
   		%do _j = 1 %to &n; 
-			%let initetamnarr = &initetamnarr etamnarr[%eval((&_i-1)*&n + &_j)] = X[&_j,1]*a&_i + X[&_j,2]*b1 %str(;) ;
+		    %local initetamnarr&_j._&_i;
+	        %let initetamnarr&_j._&_i = etamnarr[%eval((&_i-1)*&n+&_j)] = X[&_j,1]*a&_i +X[&_j,2]*b1 ;
 		%end;
 	%end;
 %end;
 %if %upcase(&btype) = DROPPED %then %do;
 	%do _i = 1 %to &g; 
   		%do _j = 1 %to &n; 
-	  		%let initetamnarr = &initetamnarr etamnarr[%eval((&_i-1)*&n + &_j)] = X[&_j,1]*a&_i %str(;) ;
+		    %local initetamnarr&_j._&_i;
+	        %let initetamnarr&_j._&_i = etamnarr[%eval((&_i-1)*&n+&_j)] = X[&_j,1]*a&_i ;
 		%end;
 	%end;
 %end;
@@ -4455,6 +4550,7 @@ data _bb_;
 run;
 
 /* eMKF: Call proc mcmc using the above customizations  */
+%put Call to PROC MCMC initiated.;
 proc mcmc data=_bb_ outpost= &blog monitor = ( &monitorline ) &optionline;;	
 
 	  %if %upcase(&bprint) ^=YES and %upcase(&bplot) ^=YES 	/* Disable output tables and plots as applicable */
@@ -4613,7 +4709,12 @@ proc mcmc data=_bb_ outpost= &blog monitor = ( &monitorline ) &optionline;;
 		  &initlineb2;;										/* initialize quad coefficients (if applicable) */	
 		  &initlineb3;;										/* initialize cubic coefficients (if applicable) */
 
-		  &initetamnarr;;							 		/* initialize conditional means for true states  */ 
+		  %let _i = 0; %let _j = 0; 
+          %do _i = 1 %to &g; 
+  	          %do _j = 1 %to &n; 
+		          &&initetamnarr&_j._&_i;;					/* initialize conditional mean for true states  */ 
+			  %end;
+		  %end;
 
 		  do k = 1 to &g; 			  						/* initialize etaarr using Markov property of AR process */
 			  etaarr[(k-1)*&n+1] = etamnarr[(k-1)*&n+1] + 
@@ -4755,6 +4856,8 @@ run;
 /* eMKF: Disable ODS graphics */
 %if %upcase(&bplot) = YES %then ods graphics off;;
 
+%put Call to PROC MCMC concluded.;
+
 /*eMKF: Keep only the desired columns in the posterior log dataset */
 %if %upcase(&bARmodel) = INDEP_AR %then %do;
 	data &blog;
@@ -4815,8 +4918,7 @@ run;
 	proc iml;
 
 		use _oPmat_;
-		read all into oP;
-		close _oPmat_;
+		read all into oP; close _oPmat_;
 		oP = oP[1:&p, 1:&p];
 		oPP = &oPPmat;;
 
@@ -5017,7 +5119,7 @@ run;
        parline parline2 aparline vparline mbparline sbparline udsparline tauparline2 psiparline2 sbparline2
        plinea plineb1 plineb2 plineb3 plinev plinetau plinepsi plinewts plineflg
        hplinemb1 hplinesb1 hplinemb2 hplinesb2 hplinemb3 hplinesb3 hplinempsi hplinespsi
-	   initlinea initlineb1 initlineb2 initlineb3 initetamnarr initlinevarr initlinetau initlinepsi initlinewts initlineflg
+	   initlinea initlineb1 initlineb2 initlineb3 initlinevarr initlinetau initlinepsi initlinewts initlineflg
 	   initlinemb1 initlinemb2 initlinemb3 initlinesb1 initlinesb2 initlinesb3 
        monitorline optionline udsline rcXline rcNline initmbeta Narrline;
 
@@ -5042,9 +5144,10 @@ run;
 	run;
 %end;
 %else %do;
+    %put ;
 	%put Reformatting data prior to Bayesian estimation;
 	%if %upcase(&brndvars) = YES and &bn = %str() %then %do;
-		%put Error: (Effective) sample sizes bn must be specified to fit random sampling variances;
+		%put ERROR: (Effective) sample sizes bn must be specified to fit random sampling variances;
 		proc iml;
 			print "  Error Note:";
 			print "  (Effective) sample sizes bn must be specified to fit random sampling variances. ";
@@ -5139,9 +5242,9 @@ run;
 	  y = T(do(1, &n, 1));				/* eMKF: column vector of consecutive time indices */
 	  yP = y || oP;
 	  create _oXmat_ from yP [ colname = {"_time" "&brtm.0" "&brtm.1" "&brtm.2" "&brtm.3"} ] ;
-	  append from yP;
+	  append from yP; close _oXmat_;
 	  create _oPmat_ from oPP [ colname = {"t0" "t1" "t2" "t3"} ] ;
-	  append from oPP;
+	  append from oPP; close _oPmat_;
 	quit;
 
 	proc sort data=_bbdata_;
@@ -5529,15 +5632,14 @@ run;
 
 /* eMKF: Prior for variance parameters */
 %let plinev=;
-%if %upcase(&brndvars) = YES %then
-	%let plinev = prior varr: ~ igamma(&bvshape, scale=&bvscale);
+%if %upcase(&brndvars) = YES %then %let plinev = prior varr: ~ igamma(&bvshape, scale=&bvscale);
 
 /******************************************************************************/
 /* eMKF: Symbolic initialization for model parameters (resolved in proc mcmc) */
 /******************************************************************************/
 
 /* eMKF: Initial values for AR parameters */
-%let initlinetau = ; %let initlinepsi = ;  %let _i = 0;
+%let initlinetau = ; %let initlinepsi = ; %let _i = 0;
 %if %upcase(&bARmodel) = COMMON_AR %then %do; 	/*common AR parameters */
 	%let initlinepsi = psi = &bmrho + sqrt(1/&bprho)*rand('normal');
 	%let initlinetau = tau = rand('uniform', &btaul, &btauu); 
@@ -5553,9 +5655,10 @@ run;
 
 /* eMKF: Dimensionality for do loops to initialize mixture parameters */
 %let _ll=0;
-%if %upcase(&btype) = BMA_CUBIC  %then %let _ll = 7;;
-%if %upcase(&btype) = BMA_QUAD 	 %then %let _ll = 5;;
-%if %upcase(&btype) = BMA_LINEAR %then %let _ll = 3;;
+%if %upcase(&btype) = BMA_CUBIC  %then %let _ll = 7;
+%if %upcase(&btype) = BMA_QUAD 	 %then %let _ll = 5;
+%if %upcase(&btype) = BMA_LINEAR %then %let _ll = 3;
+%let _ll = %eval(0+&_ll);
 
 /* eMKF: Initial values for mixture weights */
 %let initlinewts = wtssum = 0 %str(;) ;
@@ -5675,26 +5778,28 @@ run;
 %end;
 
 /* eMKF: Initial values for unobserved true states predictions given regression parameters */
-%let initetamnarr = ; 
 %let _i = 0; %let _j = 0; 
 %if %upcase(&btype) = BMA_CUBIC %then %do;
   %do _i = 1 %to &g; 
   	%do _j = 1 %to &n; 
-	  %let initetamnarr=&initetamnarr etamnarr[%eval((&_i-1)*&n+&_j)] =X[&_j,1]*a&_i +X[&_j,2]*b1arr&_i +X[&_j,3]*b2arr&_i +X[&_j,4]*b3arr&_i %str(;);
-	%end;
+	  %local initetamnarr&_j._&_i; /*eMKF: broken up into many macro variables instead of single one to avoid max length error (65534) */
+	  %let initetamnarr&_j._&_i = etamnarr[%eval((&_i-1)*&n+&_j)] = X[&_j,1]*a&_i +X[&_j,2]*b1arr&_i +X[&_j,3]*b2arr&_i +X[&_j,4]*b3arr&_i ;
+    %end;
   %end;
 %end;
 %if %upcase(&btype) = BMA_QUAD %then %do;
 	%do _i = 1 %to &g; 
   		%do _j = 1 %to &n; 
-	  		%let initetamnarr = &initetamnarr etamnarr[%eval((&_i-1)*&n + &_j)] = X[&_j,1]*a&_i + X[&_j,1]*b1arr&_i + X[&_j,2]*b2arr&_i %str(;) ;
+			%local initetamnarr&_j._&_i;
+	  		%let initetamnarr&_j._&_i = etamnarr[%eval((&_i-1)*&n + &_j)] = X[&_j,1]*a&_i + X[&_j,1]*b1arr&_i + X[&_j,2]*b2arr&_i ;
 		%end;
 	%end;
 %end;
 %if %upcase(&btype) = BMA_LINEAR %then %do;
 	%do _i = 1 %to &g; 
   		%do _j = 1 %to &n; 
-			%let initetamnarr = &initetamnarr etamnarr[%eval((&_i-1)*&n + &_j)] = X[&_j,1]*a&_i + X[&_j,2]*b1arr&_i %str(;) ;
+		    %local initetamnarr&_j._&_i;
+			%let initetamnarr&_j._&_i = etamnarr[%eval((&_i-1)*&n + &_j)] = X[&_j,1]*a&_i + X[&_j,2]*b1arr&_i ;
 		%end;
 	%end;
 %end;
@@ -5803,6 +5908,7 @@ data _bb_;
 run;
 
 /* eMKF: Call proc mcmc using the above customizations  */
+%put Call to PROC MCMC initiated.;
 proc mcmc data=_bb_ outpost= &blog monitor = ( &monitorline ) &optionline;;	
 
 	  %if %upcase(&bprint) ^=YES and %upcase(&bplot) ^=YES 	/* Disable output tables and plots as applicable */
@@ -5920,7 +6026,11 @@ proc mcmc data=_bb_ outpost= &blog monitor = ( &monitorline ) &optionline;;
 		  &initlineb2;;										/* initialize quad coefficients and related arrays (if applicable) */	
 		  &initlineb3;;										/* initialize cubic coefficients and related arrays (if applicable) */
 
-		  &initetamnarr;;							 		/* initialize conditional mean for true states  */ 
+          %do _i = 1 %to &g; 
+  	        %do _j = 1 %to &n; 
+		      &&initetamnarr&_j._&_i;;						/* initialize conditional mean for true states  */ 
+			%end;
+		  %end;
 
 		  do k = 1 to &g; 			  						/* initialize etaarr using Markov property of AR process */
 			  etaarr[(k-1)*&n+1] = etamnarr[(k-1)*&n+1] + 
@@ -6018,6 +6128,7 @@ proc mcmc data=_bb_ outpost= &blog monitor = ( &monitorline ) &optionline;;
 									   sqrt(nuarr[k]*(1-(rhoarr[k]**(2*(rts[i] - rts[i-1])))))); 
 		  	  end;
 		  end;
+
 		  prior etaarr ~ general(lpr);						/* prior for unobserved true states */
 
 		  &plinev;;								 			/* Inverse gamma prior for sampling variances (if applicable) */
@@ -6027,9 +6138,8 @@ proc mcmc data=_bb_ outpost= &blog monitor = ( &monitorline ) &optionline;;
 	  	  /********************************/
 	  	  lp = 0;		  									/* log of joint distribution of sample means */
 		  do k = 1 to &g*&n;
-		  	  lp = lp + lpdfnorm(Yarr[k], etaarr[k], sqrt(Sarr[k]));
+		      lp = lp + lpdfnorm(Yarr[k], etaarr[k], sqrt(Sarr[k]));
 		  end;
-
 		  %if %upcase(&brndvars) = YES %then %do;		  	/* log of joint distribution of sample variances (if applicable) */
 			  do k = 1 to &g;
 				  do j = 1 to &n;
@@ -6054,6 +6164,8 @@ run;
 
 /* eMKF: Disable ODS graphics */
 %if %upcase(&bplot) = YES %then ods graphics off;;
+
+%put Call to PROC MCMC concluded.;
 
 /*eMKF: Keep only the desired columns in the posterior log dataset */
 %if %upcase(&bARmodel) = INDEP_AR %then %do;
@@ -6115,9 +6227,8 @@ run;
 	proc iml;
 
 		use _oPmat_;
-		read all into oP;
+		read all into oP; close _oPmat_;
 		oP = oP[1:&p, 1:&p];
-		close _oPmat_;
 		oPP = &oPPmat;;
 
 		varNames = {"Iteration"};
@@ -6266,6 +6377,7 @@ run;
 %end;
 %else %do;
 
+    %put ;
 	%put Reformatting data prior to MLE-based estimation;
 
 	%reformat(data=&data, 
@@ -6385,9 +6497,9 @@ run;
 	  y = T(do(1, &n, 1));				/* eMKF: column vector of consecutive time indices */
 	  yP = y || oP;
 	  create _oXmat_ from yP [ colname = {"_time" "&rtm.0" "&rtm.1" "&rtm.2" "&rtm.3"} ] ;
-	  append from yP;
+	  append from yP; close _oXmat_;
 	  create _oPmat_ from oPP [ colname = {"t0" "t1" "t2" "t3"} ] ;
-	  append from oPP;
+	  append from oPP; close _oPmat_;
 	quit;
 
 	proc sort data=_sdata_;
@@ -7128,14 +7240,14 @@ proc iml;
 		/* Next for the Xmatrix */
 		/* eMKF: modified to allow for quadratic and cubic trend models */
 		use _Xmat_(where=(_rep=&jj) keep= _rep x:);
-		read all into XX;
+		read all into XX; close _Xmat_; /* eMKF: also added close statements for cleanliness */
 		Z =XX[,2:(1+&p)];
 		&&_Z&jj ;;
 	 	Xs = Z&jj;
 
 		/* Next for the V matrix */
 		use _Vmat_(where=(_rep=&jj) keep= _rep ad:);
-		read all into VV;
+		read all into VV; close _Vmat_; 
 		Z =VV[,&n1:&n2];
 		&&_Z&jj ;;
 		Vs = Z&jj;
@@ -7143,21 +7255,21 @@ proc iml;
 
 		/* Next for the Ve matrix */
 		use _Vemat_(where=(_rep=&jj) keep= _rep ad:);
-		read all into VVe;
+		read all into VVe; close _Vemat_;
 		Z =VVe[,&n1:&n2];
 		&&_Z&jj ;;
 		Ves = Z&jj;
 
 		/* Next for the Vg matrix */
 		use _Vgmat_(where=(_rep=&jj) keep= _rep ad:);
-		read all into VVg;
+		read all into VVg; close _Vgmat_;
 		Z =VVg[,&n1:&n2];
 		&&_Z&jj ;;
 		Vgs = Z&jj;
 
 		/* Next for the A matrix */
 		use _Amat_(where=(_rep=&jj)  keep= _rep ah:);
-	    read all into AA;
+	    read all into AA; close _Amat_;
 		Z =AA[,&n1:&n2];
 		&&_Z&jj ;;
 		As = Z&jj;
@@ -7166,6 +7278,7 @@ proc iml;
 		use _Dmat_(where=(_rep=&jj) keep=_rep &by &group &rtm _time _y _se);  /*eMKF: also keeping &rtm */
 		read all var{_y} into Y;
 		read all var{_rep &by &group &rtm _time} into NM; 					/*eMKF: also keeping &rtm */
+		close _Dmat_;
 
 		/* Now do the estimations */
 		i_&n = i(&n*&g);
@@ -7188,14 +7301,14 @@ proc iml;
 	 %end;
 
 	 create &out._H from ffs ;
-	 append from ffs;
+	 append from ffs; close &out._H;
 
 	 create &out._CovY from fVs ;
-	 append from fVs;
+	 append from fVs; close &out._CovY;
 	 
 	 %if &by ^=%str() %then create &out._PredVar from fVys [ colname = {"_rep" "&by" "&group" "&rtm" "_time" "Hat_y" "PredVar" "HatMSE"} ];;;
 	 %if &by  =%str() %then create &out._PredVar from fVys [ colname = {"_rep" "&group" "&rtm" "_time" "Hat_y" "PredVar" "HatMSE"} ];;;
-	 append from fVys;
+	 append from fVys; close &out._PredVar;
 	 
 quit; /*eMKF: ends call to proc iml with matrix calculations*/
 
@@ -7237,9 +7350,8 @@ run;
 	%let k = %eval(&p - 1); %let jj = 0; 
 	proc iml;
 		use _oPmat_;
-		read all into oPP;
+		read all into oPP; close _oPmat_;
 		oPP = oPP[1:&p, 1:&p];
-		close _oPmat_;
 		varNames = {"_rep" "_group_" "a"};
 		%if &p > 1 %then %do;
 			bNames = "b1":"b&k";	
@@ -7248,8 +7360,7 @@ run;
 		create _tests var varNames;
 		%do jj=1 %to &nrep;
 			use &out._ests(where=(_rep = &jj) keep= _rep _group_ a %if &p > 1 %then b: ; ) ;
-			read all into oB;
-			close &out._ests;
+			read all into oB; close &out._ests;
 			oB1 = oB[,1:2];
             oB = T(oB[,3:(2+&p)]);
             oBB = oPP * oB;
@@ -7370,9 +7481,8 @@ run;
 	proc iml;
 
 		use _oPmat_;
-		read all into oP;
+		read all into oP; close _oPmat_;
 		oP = oP[1:&p, 1:&p];
-		close _oPmat_;
 		oPP = &oPPmat;;
 
 		/* eMKF: re-structure block matrix in the common trend cases (where &p > 1) */
@@ -7412,8 +7522,7 @@ run;
 		create _tcovmat var varNames;
 		%do jj=1 %to &nrep;
 			use _covmat(where=(_rep = &jj) drop= Parameter nRow);
-			read all into oB;
-			close _covmat;
+			read all into oB; close _covmat;
 			oB1 = oB[,1:2];
 			oB = oB[,3:ncol(oB)];
             oBB = oPP * oB * T(oPP);
@@ -7425,8 +7534,7 @@ run;
 		create _tcovmatt var varNames;
 		%do jj=1 %to &nrep;
 			use _covmatt(where=(_rep = &jj) drop= Parameter);
-			read all into oB;
-			close _covmatt;
+			read all into oB; close _covmatt;
 			oB1 = oB[,1:2];
 			oB = oB[,3:ncol(oB)];
 			oBB = oPP * T(oB);
@@ -7508,8 +7616,7 @@ run;
 		create _dcovmatt var{"_rep" "Row" "Var"};
 		%do jj=1 %to &nrep;
 			use &out._covmat(where=(_rep = &jj) drop= Parameter);
-			read all into oB;
-			close &out._covmat;
+			read all into oB; close &out._covmat;
 			oB1 = oB[,1:2];
 			oB = oB[,3:ncol(oB)];
 			oBB = vecdiag(oB);
@@ -7625,8 +7732,10 @@ data &out._pred; /* eMKF: added a few useful labels */
 	     _time ="Time index variable"
 	     _y  ="Original outcome"
 	     _se ="Original Standard Error"
-		 _avgse = "Average Standard Error used for imputation"
-		 impute = "Whether original Standard Error was imputed"
+		 _avgse = "Average Standard Error across timepoints used for imputation"
+		 %if &by ^= %str() %then  _avgseb = "Average Standard Error across strata used for imputation";
+         impute = "Whether original Standard Error was imputed using average across timepoints"
+		 %if &by ^= %str() %then imputeb = "Whether original Standard Error was imputed using average across strata";
 		 inputorder = "Original ordering of the groups if it was not alphabetical"
 	     prediction="Kalman estimator prediction of the outcome assuming &bvalue trend model"
 	     PredMSE="Prediction variability: Mean Squared Error (MSE) assuming &bvalue trend model "
@@ -7766,6 +7875,7 @@ run;
 %end;
 %else %do;
 
+    %put ;
 	%put Reformatting data prior to MLE-based estimation;
 
 	%reformat(data=&data, 
@@ -7905,9 +8015,9 @@ run;
 	  y = T(do(1, &n, 1));				/* eMKF: column vector of consecutive time indices */
 	  yP = y || oP;
 	  create _oXmat_ from yP [ colname = {"_time" "&rtm.0" "&rtm.1" "&rtm.2" "&rtm.3"} ] ;
-	  append from yP;
+	  append from yP; close _oXmat_;
 	  create _oPmat_ from oPP [ colname = {"t0" "t1" "t2" "t3"} ] ;
-	  append from oPP;
+	  append from oPP; close _oPmat_;
 	quit;
 
 	proc sort data=_sdata_;
@@ -8811,14 +8921,14 @@ proc iml;
 		/* Next for the Xmatrix */
 		/* eMKF: modified to allow for quadratic and cubic trend models */
 		use _Xmat_(where=(_rep=&jj) keep= _rep x:);
-		read all into XX;
+		read all into XX; close _Xmat_; /* eMKF: added close statements for cleanliness */
 		Z =XX[,2:(1+&p)];
 		&&_Z&jj ;;
 	 	Xs = Z&jj;
 
 		/* Next for the V matrix */
 		use _Vmat_(where=(_rep=&jj) keep= _rep ad:);
-		read all into VV;
+		read all into VV; close _Vmat_;
 		Z =VV[,&n1:&n2];
 		&&_Z&jj ;;
 		Vs = Z&jj;
@@ -8826,50 +8936,50 @@ proc iml;
 
 		/* The o2V matrix for outcome 2*/
 		use _Vmat_(where=(_rep=&jj) keep= _rep o2ad:);
-		read all into o2VV;
-		Z =o2VV[,&n1:&n2];
+		read all into o2VV; close _Vmat_;
+		Z =o2VV[,&n1:&n2];_;
 		&&_Z&jj ;;
 		o2Vs = Z&jj;
 		invo2Vs=inv(o2Vs);
 
 		/* Next for the Ve matrix */
 		use _Vemat_(where=(_rep=&jj) keep= _rep ad:);
-		read all into VVe;
+		read all into VVe; close _Vemat_;
 		Z =VVe[,&n1:&n2];
 		&&_Z&jj ;;
 		Ves = Z&jj;
 
 		/* The Ve matrix for outcome 2*/
 		use _Vemat_(where=(_rep=&jj) keep= _rep o2ad:);
-		read all into o2VVe;
+		read all into o2VVe; close _Vemat_;
 		Z =o2VVe[,&n1:&n2];
 		&&_Z&jj ;;
 		o2Ves = Z&jj;
 
 		/* Next for the Vg matrix */
 		use _Vgmat_(where=(_rep=&jj) keep= _rep ad:);
-		read all into VVg;
+		read all into VVg; close _Vgmat_;
 		Z =VVg[,&n1:&n2];
 		&&_Z&jj ;;
 		Vgs = Z&jj;
 
 		/* The Vg matrix for outcome 2*/
 		use _Vgmat_(where=(_rep=&jj) keep= _rep o2ad:);
-		read all into o2VVg;
+		read all into o2VVg; close _Vgmat_;
 		Z =o2VVg[,&n1:&n2];
 		&&_Z&jj ;;
 		o2Vgs = Z&jj;
 
 		/* Next for the A matrix */
 		use _Amat_(where=(_rep=&jj)  keep= _rep ah:);
-		read all into AA;
+		read all into AA; close _Amat_;
 		Z =AA[,&n1:&n2];
 		&&_Z&jj ;;
 		As = Z&jj;
 
 		/* The A matrix for outcome 2*/
 		use _Amat_(where=(_rep=&jj)  keep= _rep o2ah:);
-		read all into o2AA;
+		read all into o2AA; close _Amat_;
 		Z =o2AA[,&n1:&n2];
 		&&_Z&jj ;;
 		o2As = Z&jj;
@@ -8879,6 +8989,7 @@ proc iml;
 		read all var{_y} into Y;
 		read all var{_y2} into o2Y;
 		read all var{_rep &by &group &rtm _time} into NM;							/*eMKF: also keeping &rtm */
+		close _Dmat_;
 
 		/* Now do the estimations */
 		i_&n = i(&n*&g);
@@ -8916,18 +9027,18 @@ proc iml;
 	 %end;
 
 	 create &out._H from ffs ;
-	 append from ffs;
+	 append from ffs; close &out._H;
 	 create &out._o2H from o2ffs ;
-	 append from o2ffs;
+	 append from o2ffs; close &out._o2H;
 
 	 create &out._CovY from fVs ;
-	 append from fVs;
+	 append from fVs; close &out._CovY;
 	 create &out._o2CovY from o2fVs ;
-	 append from o2fVs;
+	 append from o2fVs; close &out._o2CovY;
 
 	 %if &by ^=%str() %then create &out._PredVar from fVys [ colname = {"_rep" "&by" "&group" "&rtm" "_time" "Hat_y" "PredVar" "HatMSE" "Hat_y2" "PredVar2" "HatMSE2"} ];;;
 	 %if &by  =%str() %then create &out._PredVar from fVys [ colname = {"_rep" "&group" "&rtm" "_time" "Hat_y" "PredVar" "HatMSE" "Hat_y2" "PredVar2" "HatMSE2"} ];;;
-	 append from fVys;
+	 append from fVys; close &out._PredVar;
 
 quit; /*eMKF: ends call to proc iml with matrix calculations */
 
@@ -9012,9 +9123,8 @@ run;
 	proc iml;
 
 		use _oPmat_;
-		read all into oPP;
+		read all into oPP; close _oPmat_;
 		oPP = oPP[1:&p, 1:&p];
-		close _oPmat_;
 
 		/* Outcome 1 */
 		varNames = {"_rep" "_group_" "o1a" };
@@ -9025,8 +9135,7 @@ run;
 		create _tests1 var varNames;
 		%do jj=1 %to &nrep;
 			use &out._ests(where=(_rep = &jj) keep= _rep _group_ o1a %if &p > 1 %then o1b: ; ) ;
-			read all into oB;
-			close &out._ests;
+			read all into oB; close &out._ests;
 			oB1 = oB[,1:2];
             oB = T(oB[,3:(2+&p)]);
             oBB = oPP * oB;
@@ -9045,8 +9154,7 @@ run;
 		create _tests2 var varNames;
 		%do jj=1 %to &nrep;
 			use &out._ests(where=(_rep = &jj) keep= _rep _group_ o2a %if &p > 1 %then o2b: ; ) ;
-			read all into oB;
-			close &out._ests;
+			read all into oB; close &out._ests;
 			oB1 = oB[,1:2];
             oB = T(oB[,3:(2+&p)]);
             oBB = oPP * oB;
@@ -9259,9 +9367,8 @@ run;
 	proc iml;
 
 		use _oPmat_;
-		read all into oP;
+		read all into oP; close _oPmat_;
 		oP = oP[1:&p, 1:&p];
-		close _oPmat_;
 		oPP = &oPPmat;;
 
 		/* eMKF: re-structure block matrix in the common trend cases (where &p > 1) */
@@ -9312,8 +9419,7 @@ run;
 		create _tcovmat var varNames;
 		%do jj=1 %to &nrep;
 			use _covmat(where=(_rep = &jj) drop= Parameter nRow);
-			read all into oB;
-			close _covmat;
+			read all into oB; close _covmat;
 			oB1 = oB[,1:2];
 			oB = oB[,3:ncol(oB)];
             oBB = oPP * oB * T(oPP);
@@ -9325,8 +9431,7 @@ run;
 		create _tcovmatt var varNames;
 		%do jj=1 %to &nrep;
 			use _covmatt(where=(_rep = &jj) drop= Parameter);
-			read all into oB;
-			close _covmatt;
+			read all into oB; close _covmatt;
 			oB1 = oB[,1:2];
 			oB = oB[,3:ncol(oB)];
 			oBB = oPP * T(oB);
@@ -9424,8 +9529,7 @@ run;
 		create _dcovmatt var{"_rep" "Row" "Var"};
 		%do jj=1 %to &nrep;
 			use &out._covmat(where=(_rep = &jj) drop= Parameter);
-			read all into oB;
-			close &out._covmat;
+			read all into oB; close &out._covmat;
 			oB1 = oB[,1:2];
 			oB = oB[,3:ncol(oB)];
 			oBB = vecdiag(oB);
@@ -9571,11 +9675,14 @@ data &out._pred;  /*eMKF: added a few useful labels */
 		   _time ="Time "
 		   _y  ="Original outcome for the outcome &outcome"
 		   _se ="Original Standard Error for the outcome &outcome"
-		   _avgse ="Average Standard Error for the outcome &outcome used for imputation"
-	       _y2  ="Original outcome for the outcome &outcome2"
+		   _avgse ="Average Standard Error across timepoints for the outcome &outcome used for imputation"
+	       %if &by ^= %str() %then _avgseb ="Average Standard Error across strata for the outcome &outcome used for imputation";
+           _y2  ="Original outcome for the outcome &outcome2"
 		   _se2 ="Original Standard Error for the outcome &outcome2"
-		   _avgse2 ="Average Standard Error for the outcome &outcome2 used for imputation"
-		   impute= "Whether original Standard Error for outcome &outcome or &outcome2 was imputed"
+		   _avgse2 ="Average Standard Error across timepoints for the outcome &outcome2 used for imputation"
+		   %if &by ^= %str() %then _avgse2b ="Average Standard Error across strata for the outcome &outcome2 used for imputation";
+		   impute= "Whether original Standard Error for outcome &outcome or &outcome2 was imputed using average across timepoints"
+		   %if &by ^= %str() %then imputeb= "Whether original Standard Error for outcome &outcome or &outcome2 was imputed using average across strata";
 		   inputorder="Original orderng of the groups if it was not alphabetical"
 		   prediction="Kalman estimator prediction of the outcome &outcome assuming &bvalue trend model"
 		   PredMSE="Prediction variability: Mean Squared Error (MSE) for the outcome &outcome assuming &bvalue trend model "
@@ -9656,7 +9763,7 @@ outcome is defined with time and group variables
 */
 
 /* eMKF: Modified to track real time for use in calculations and calculate lags between succesive time points
- *		 Modified to allow for effective sample sizes to be specified
+ *		 Modified to allow for effective sample sizes to be specified, and to allow for imputing SEs across strata if needed
  * 		 Added random variance option
  */
 
@@ -9678,10 +9785,8 @@ outcome is defined with time and group variables
 %local wt1 wt2 wn wi wa wb;
 
 /* eMKF: inputorder variable definition */
-
 data &outformat _freqg_ _freq_ _freqn_;
 run;
-
 data &outformat;
  set &data;
  inputorder +1;
@@ -9718,7 +9823,6 @@ run;
 	run;
 %end;
 %else %do; 	/* eMKF: incremented _rep */
-
 	proc freq data=&outformat noprint;
 	 tables &by /list out=_freq_;
 	run;
@@ -9727,16 +9831,13 @@ run;
 	 _rep +1;
 	 keep _rep &by;
 	run;
-
-	/* eMKF: sort and merge */
-	proc sort data=&outformat;
+	proc sort data=&outformat; /* eMKF: sort and merge */
 	 by &by;
 	run;
 	data &outformat;
 	 merge &outformat _freq_;
 	 by &by;
 	run;
-
 %end;
 
 %let wn=;
@@ -9747,7 +9848,6 @@ run;
 %let wb=;
 
 /* eMKF: If format 2, then find number of time points and define generic variables for outcome(s) and SE(s) */
-
 %if %scan(&outcome,2) = %str() %then %do;
 
 	/* eMKF: _time variable definition */
@@ -9775,7 +9875,6 @@ run;
 	  set _freqn_;
 	  if _n_ = 1 then _rlag = .;
 	run;
-
 
 	/* eMKF: number of time points */
 	%let wt2 = %eval(0 + &wt2 );
@@ -9836,7 +9935,7 @@ run;
 
 /*eMKF: mean imputations for missing or zero SEs */
 
-data _means_ _means2_ ;
+data _means_ _means2_ _meansb_ _means2b_;
 run;
 
 data &outformat;
@@ -9849,13 +9948,13 @@ proc sort data= &outformat;
   by _rep _group_ _time;
 run;
 
+/* eMKF: Averages across timepoints */
 proc means data=&outformat noprint;
   var _se;
   where _se ne .;
   by _rep _group_;
   output out= _means_(drop= _type_ _freq_) mean=_avgse;
 run;
-
 %if %scan(&outcome2,1) ^=%str() and %scan(&se2,1) ^=%str() %then %do;
 	proc means data=&outformat noprint;
 	 var _se2;
@@ -9863,6 +9962,30 @@ run;
 	 by _rep _group_;
 	 output out= _means2_(drop= _type_ _freq_) mean=_avgse2;
 	run;
+%end;
+
+/* eMKF: Averages across strata */
+%if &by ^= %str() %then %do; 
+  proc sort data= &outformat;
+    by _group_ _time _rep;
+  run;
+  proc means data=&outformat noprint;
+    var _se;
+    where _se ne .;
+    by _group_ _time;
+    output out= _meansb_(drop= _type_ _freq_) mean=_avgseb;
+  run;
+  %if %scan(&outcome2,1) ^=%str() and %scan(&se2,1) ^=%str() %then %do;
+    proc means data=&outformat noprint;
+	  var _se2;
+	  where _se2 ne .;
+	  by _group_ _time;
+	  output out= _means2b_(drop= _type_ _freq_) mean=_avgse2b;
+	run;
+  %end;
+  proc sort data= &outformat;
+    by _rep _group_ _time;
+  run;
 %end;
 
 data &outformat;
@@ -9881,11 +10004,40 @@ data &outformat;
   %end;
 run;
 
-/*eMKF: Added effective sample size calculation */
+/*eMKF: (new in eMKF) use average SE across strata if still have missing SEs */
+%if &by ^= %str() %then %do; 
+  proc sort data= &outformat;
+    by _group_ _time _rep;
+  run;
+  data &outformat;
+    merge &outformat _meansb_ %if %scan(&outcome2,1) ^=%str() and %scan(&se2,1) ^=%str() %then _means2b_ ;;
+    by _group_ _time;
+    imputeb=0;
+    if _se=. and _avgseb > 0 then do;
+	  imputeb=1;
+	  _se = _avgseb;
+    end;
+    %if %scan(&outcome2,1) ^=%str() and %scan(&se2,1) ^=%str() %then %do;
+	  if _se2=. and _avgse2b > 0 then do;
+		  imputeb=1;
+		  _se2 = _avgse2b;
+	  end;
+    %end;
+  run;
+  proc sort data= &outformat;
+    by _rep _group_ _time;
+  run;
+%end;
+
+/*eMKF: Added effective sample size imputations */
+
+data _means_ _means2_ _meansb_ _means2b_;
+run;
+
 %if %upcase(&randomVars) = YES %then %do;
 
 	%if &neff = %str() %then %do;
-		%put Error: (Effective) sample sizes neff must be specified to fit random sampling variances;
+		%put ERROR: (Effective) sample sizes neff must be specified to fit random sampling variances;
 		proc iml;
 			print "  Error Note:";
 			print "  (Effective) sample sizes neff must be specified to fit random sampling variances. ";
@@ -9903,19 +10055,14 @@ run;
 	  %end;
 	run;
 
-	data _means_;
-	run;
-
+	/* eMKF: Averages across timepoints */
 	proc means data=&outformat noprint;
 	  var _n;
 	  where _n ne .;
 	  by _rep _group_;
 	  output out= _means_(drop= _type_ _freq_) mean=_avgn;
 	run;
-
 	%if %scan(&outcome2,1) ^=%str() and %scan(&se2,1) ^=%str() %then %do;
-		data _means2_;
-		run;
 		proc means data=&outformat noprint;
 		  var _n2;
 		  where _n2 ne .;
@@ -9924,23 +10071,71 @@ run;
 		run;
 	%end;
 
+	/* eMKF: Averages across strata */
+    %if &by ^= %str() %then %do; 
+      proc sort data= &outformat;
+        by _group_ _time _rep;
+      run;
+      proc means data=&outformat noprint;
+        var _n;
+        where _n ne .;
+        by _group_ _time;
+        output out= _meansb_(drop= _type_ _freq_) mean=_avgnb;
+      run;
+      %if %scan(&outcome2,1) ^=%str() and %scan(&se2,1) ^=%str() %then %do;
+        proc means data=&outformat noprint;
+	      var _n2;
+	      where _n2 ne .;
+	      by _group_ _time;
+	      output out= _means2b_(drop= _type_ _freq_) mean=_avgn2b;
+	    run;
+      %end;
+      proc sort data= &outformat;
+        by _rep _group_ _time;
+      run;
+    %end;
+
+	/*eMKF: first pass at imputation using average over timepoints */
 	data &outformat;
 	  merge &outformat _means_ %if %scan(&outcome2,1) ^=%str() and %scan(&se2,1) ^=%str() %then _means2_ ;;
 	  by _rep _group_;
 	  if _n=. and _avgn > 0 then _n = _avgn;
 	  %if %scan(&outcome2,1) ^=%str() and %scan(&se2,1) ^=%str() %then if _n2=. and _avgn2 > 0 then _n2 = _avgn2;;;
 	run;
+
+	/*eMKF: second pass at imputation using average across strata */
+	%if &by ^= %str() %then %do; 
+      proc sort data= &outformat;
+        by _group_ _time _rep;
+      run;
+	  data &outformat;
+	    merge &outformat _meansb_ %if %scan(&outcome2,1) ^=%str() and %scan(&se2,1) ^=%str() %then _means2b_ ;;
+	    by _group_ _time;
+	    if _n=. and _avgnb > 0 then _n = _avgnb;
+	    %if %scan(&outcome2,1) ^=%str() and %scan(&se2,1) ^=%str() %then if _n2=. and _avgn2b > 0 then _n2 = _avgn2b;;;
+	  run;
+      proc sort data= &outformat;
+        by _rep _group_ _time;
+      run;
+	%end;
+
 %end;
 
 data _means_;
+run;
+
+data _means_;
   set &outformat;
-  if impute=1;
+  %if &by = %str() %then if impute=1;;
+  %if &by ^= %str() %then if impute=1 or imputeb=1;;
 run;
 
 data &outformat;
-  merge &outformat(drop=impute) _means_(keep= _rep _group_ impute);
+  merge &outformat(drop=impute %if &by ^= %str() %then imputeb;) 
+        _means_(keep= _rep _group_ impute %if &by ^= %str() %then imputeb;);
   by _rep _group_;
   if impute=. then impute=0;
+  %if &by ^= %str() %then if imputeb=. then imputeb=0;;
 run;
 
 data _means_;
@@ -9978,7 +10173,7 @@ proc sort data= &outformat;
 run;
 
 proc datasets nolist;
-  delete _means_ _means2_ _freqg_ _freqn_ _freq_ ;
+  delete _means_ _means2_ _meansb_ _means2b_ _freqg_ _freqn_ _freq_ ;
 run ;
 quit; 
 
