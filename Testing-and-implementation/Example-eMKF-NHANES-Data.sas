@@ -1,5 +1,5 @@
 /*  
- * This file illustrates the use of the enhanced Modified Kalman Filter (MKF) macro (eMKF, v12) using example from:
+ * This file illustrates the use of the enhanced Modified Kalman Filter (MKF) macro (eMKF, v13) using example from:
  *
  * Talih M, Rossen LM, Patel P, Earp M, Parker JD. Technical Guidance for Using the Modified Kalman Filter 
  * in Small Domain Estimation at the National Center for Health Statistics. National Center for Health Statistics. 
@@ -13,18 +13,6 @@
  * The data is assumed to be in user directory: ..\eMKF\MKFdata
  */
 %let user_path = \\..; /* Replace \\.. with the applicable path */
-
-options nonotes;
-OPTIONS FORMCHAR="|----|+|---+=|-/\<>*";
-
-/* To output the log and results to a .log and .html file */
-
-ods listing close;
-proc printto log="&user_path.\logfile.log" new;
-ODS HTML5 path="&user_path.\"
-(url=none)
-body="Output_emkf.html";
-run;
 
 /* Define the data library */
 libname sdata "&user_path\eMKF\MKFdata";
@@ -75,8 +63,8 @@ run;
 proc print data=NHANESobesity(obs=20);
 run;
 
-/* Compile the enhanced Modified Kalman Filter macro (eMKF, v12) */
-%include "&user_path\eMKF\MKFmacro\emkf_macro_v12.sas";
+/* Compile the enhanced Modified Kalman Filter macro (eMKF, v13) */
+%include "&user_path\eMKF\MKFmacro\emkf_macro.sas";
 
 /* Conduct Bayesian model averaging estimation */
 %let _timer_start = %sysfunc(datetime()); 	/* start timer */

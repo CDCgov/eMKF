@@ -1,5 +1,5 @@
 /*  
- * This file tests the enhanced Modified Kalman Filter (MKF) macro (eMKF, v12) and compares its output against the original MKF macro
+ * This file tests the enhanced Modified Kalman Filter (MKF) macro (eMKF, v13) and compares its output against the original MKF macro
  * Additional test cases for eMKF are also provided
  *
  * Main methodological differences between the enhanced and earlier MKF macros are described in README.md
@@ -9,21 +9,7 @@
  *  The macro is assumed to be saved in a user directory called: ..\eMKF\MKFmacro
  *  The data is assumed to be in user directory: ..\eMKF\MKFdata
  */
-
-options nonotes;
-OPTIONS FORMCHAR="|----|+|---+=|-/\<>*";
-
 %let user_path = \\..; /* Replace \\.. with the applicable path */
-
-/* To output the log and results to a .log and .html file */
-
-ods listing close;
-proc printto log="&user_path.\logfile.log" new;
-ODS HTML5 path="&user_path.\"
-(url=none)
-body="Output_emkf.html";
-run;
-
 
 /* Specify the data library */
 libname sdata "&user_path\eMKF\MKFdata";
@@ -49,11 +35,11 @@ run;
 /* Simulated data provided with the release of the original MKF macro */
 data withgender;
 	length Race $20 Gender$20;
-	label 	Gender =â€™Gender subsetâ€™
-			Race =â€™Race group surveyedâ€™
-			Year=â€™Year of the surveyâ€™
-			Disease = â€™Prevalence of the Diseaseâ€™
-			SE = â€™Prevalence Standard Errorâ€™
+	label 	Gender =’Gender subset’
+			Race =’Race group surveyed’
+			Year=’Year of the survey’
+			Disease = ’Prevalence of the Disease’
+			SE = ’Prevalence Standard Error’
 	;
 	input Gender $ Race $ Year Disease SE @@;
 	datalines;
@@ -155,8 +141,8 @@ run;
 
 /**************************Comparison runs using extended MKF (eMKF) ********************************/
 
-/* Compile extended MKF macro (eMKF v12) */
-%include "&user_path\eMKF\MKFmacro\emkf_macro_v12.sas";
+/* Compile extended MKF macro (eMKF v13) */
+%include "&user_path\eMKF\MKFmacro\emkf_macro.sas";
 
 /***************/
 /* One outcome */

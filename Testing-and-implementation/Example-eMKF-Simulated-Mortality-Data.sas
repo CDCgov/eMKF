@@ -1,5 +1,5 @@
 /*  
- * This file illustrates the enhanced Modified Kalman Filter (MKF) macro (eMKF, v12) using simulated state-level mortality data.
+ * This file illustrates the enhanced Modified Kalman Filter (MKF) macro (eMKF, v13) using simulated state-level mortality data.
  *
  * Annual state-level data were queried using CDC WONDER for the 21-year period 1999-2000. Data were tabulated by: 
  * - Age group (< 1 year, 1-4, 5-14, 15-24, 25-34, 35-44, 45-54, 55-64, 65-74, 75-84, 85 years and over)
@@ -25,19 +25,6 @@
  * The data is assumed to be in user directory: ..\eMKF\MKFdata
  */
 %let user_path = \\..; /* Replace \\.. with the applicable path */
-
-
-options nonotes;
-OPTIONS FORMCHAR="|----|+|---+=|-/\<>*";
-
-/* To output the log and results to a .log and .html file */
-
-ods listing close;
-proc printto log="&user_path.\logfile.log" new;
-ODS HTML5 path="&user_path.\"
-(url=none)
-body="Output_emkf.html";
-run;
 
 /* Define the data library */
 libname sdata "&user_path\eMKF\MKFdata";
@@ -165,8 +152,8 @@ run;
 proc print data=ExternalCausesByAge(obs=20);
 run;
 
-/* Compile the enhanced Modified Kalman Filter macro (eMKF, v12) */
-%include "&user_path\eMKF\MKFmacro\emkf_macro_v12.sas";
+/* Compile the enhanced Modified Kalman Filter macro (eMKF, v13) */
+%include "&user_path\eMKF\MKFmacro\emkf_macro.sas";
 
 /*******************************************************************************/
 /* Age-adjusted data stratified by state (borrowing strength across r-e groups */
@@ -286,7 +273,7 @@ title "Enhanced MKF. One outcome: Maximum likelihood-based model averaging with 
 	  se 		 = Age_Specific_SE,
 	  Bayesmodel = ,
 	  slopes 	 = indep_cubic indep_quad indep_linear 
-				   common_cubic common_quad common_linear 
+				   common_cubic common_quad common_linear
 				   dropped,
 	  out		 = mac
 	  );
