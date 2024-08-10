@@ -1,4 +1,4 @@
-# The Enhanced Modified Kalman Filter (eMKF) tool for small domain estimation
+# The Enhanced Modified Kalman Filter (eMKF) tool for small domain estimation [version 1.4 2024-08-10]
 
 **General disclaimer** This repository was created for use by CDC programs to collaborate on public health related projects in support of the [CDC mission](https://www.cdc.gov/about/organization/mission.htm).  GitHub is not hosted by the CDC, but is a third party website used by CDC and its partners to share information and collaborate on software. CDC use of GitHub does not imply an endorsement of any one particular service, product, or enterprise. 
 
@@ -38,7 +38,7 @@ Please refer to the documentation provided in <mark>[Link to Series 2 report]</m
 
 * <mark>[Link to Series 2 report]</mark>
 * <mark>[Link to Series 2 report]</mark>
-* <mark>[Link to Appendix Table II-1 in Guidance report] (Default eMKF macro parameter settings)</mark>
+* <mark>[Link to Appendix II Table in Guidance report] (Default eMKF macro parameter settings)</mark>
 
 
 ### Outline of methodological differences between eMKF (version 1.4 2024-08-10) and the original MKF
