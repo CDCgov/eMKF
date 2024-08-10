@@ -94,17 +94,17 @@ Please refer to the documentation provided in <mark>[Link to Series 2 report]</m
 
 ### References
 
-Lockwood JR, McCaffrey DF, Setodji CM, Elliott MN. Smoothing across time in repeated cross-sectional data. Stat Med 30(5):584–94. 2011.
+Lockwood JR, McCaffrey DF, Setodji CM, Elliott MN. Smoothing across time in repeated cross-sectional data. Stat Med 30(5):584–94. 2011. DOI: https://dx.doi.org/10.1002/sim.3897.
 
-Polettini S. A generalised semiparametric Bayesian Fay–Herriot model for small area estimation shrinking both means and variances. Bayesian Anal 12(3):729–52. 2016.
+Polettini S. A generalised semiparametric Bayesian Fay–Herriot model for small area estimation shrinking both means and variances. Bayesian Anal 12(3):729–52. 2016. DOI: https://dx.doi.org/10.1214/16-BA1019.
     
-Rossen LM, Talih M, Patel P, Earp M, Parker JD. Evaluation of an enhanced modified Kalman filter approach for estimating health outcomes in small subpopulations. National Center for Health Statistics. Vital Health Stat 2(208). 2024. 
+Rossen LM, Talih M, Patel P, Earp M, Parker JD. Evaluation of an enhanced modified Kalman filter approach for estimating health outcomes in small subpopulations. National Center for Health Statistics. Vital Health Stat 2(208). 2024. DOI: https://dx.doi.org/10.15620/cdc/157496.
 
 Setodji CM, Lockwood JR, McCaffrey DF, Elliott MN, Adams JL. The Modified Kalman Filter macro: User’s guide. RAND Technical Report No. TR-997-DHHS. 2011. Available from: https://www.rand.org/pubs/technical_reports/TR997.html.
 
-Talih M, Rossen LM, Patel P, Earp M, Parker JD. Technical guidance for using the modified Kalman filter in small-domain estimation at the National Center for Health Statistics. National Center for Health Statistics. Vital Health Stat 2(209). 2024. 
+Talih M, Rossen LM, Patel P, Earp M, Parker JD. Technical guidance for using the modified Kalman filter in small-domain estimation at the National Center for Health Statistics. National Center for Health Statistics. Vital Health Stat 2(209). 2024. DOI: https://dx.doi.org/10.15620/cdc/157496.
 
-Vehtari A, Gelman A, Simpson D, Carpenter B, Bürkner PC. Rank-normalization, folding, and localization: An improved Ȓ for assessing convergence of MCMC (with discussion). Bayesian Anal 16(2):667–718. 2021.
+Vehtari A, Gelman A, Simpson D, Carpenter B, Bürkner PC. Rank-normalization, folding, and localization: An improved Ȓ for assessing convergence of MCMC (with discussion). Bayesian Anal 16(2):667–718. 2021. DOI: https://dx.doi.org/10.1214/20-BA1221.
 
   
 ## Public Domain Standard Notice
