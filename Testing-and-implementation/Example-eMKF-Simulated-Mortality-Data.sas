@@ -1,5 +1,5 @@
 /*  
- * This file illustrates the enhanced Modified Kalman Filter (MKF) macro (eMKF, v13) using simulated state-level mortality data.
+ * This file illustrates the enhanced Modified Kalman Filter (MKF) macro using simulated state-level mortality data.
  *
  * Annual state-level data were queried using CDC WONDER for the 21-year period 1999-2000. Data were tabulated by: 
  * - Age group (< 1 year, 1-4, 5-14, 15-24, 25-34, 35-44, 45-54, 55-64, 65-74, 75-84, 85 years and over)
@@ -15,9 +15,9 @@
  *
  * Talih M, Rossen LM, Patel P, Earp M, Parker JD. Technical Guidance for Using the Modified Kalman Filter 
  * in Small Domain Estimation at the National Center for Health Statistics. National Center for Health Statistics. 
- * Vital Health Stat 2(209). 2024. DOI: 10.15620/cdc:xxxxxx.
+ * Vital Health Stat 2(209). 2024. DOI: 10.15620/cdc:157496.
  *
- * Main methodological differences between the enhanced and earlier MKF macros are described in README.md
+ * Main methodological differences between the enhanced and earlier MKF macros are described in README.md.
  */
 
 /* Specify the directory path:
@@ -152,7 +152,7 @@ run;
 proc print data=ExternalCausesByAge(obs=20);
 run;
 
-/* Compile the enhanced Modified Kalman Filter macro (eMKF, v13) */
+/* Compile the enhanced Modified Kalman Filter macro (eMKF) */
 %include "&user_path\eMKF\MKFmacro\emkf_macro.sas";
 
 /*******************************************************************************/
@@ -272,8 +272,8 @@ title "Enhanced MKF. One outcome: Maximum likelihood-based model averaging with 
 	  outcome	 = Age_Specific_Rate, 
 	  se 		 = Age_Specific_SE,
 	  Bayesmodel = ,
-	  slopes 	 = indep_cubic indep_quad indep_linear 
-				   common_cubic common_quad common_linear
+	  slopes 	 = /*indep_cubic indep_quad indep_linear 
+				   common_cubic common_quad common_linear */
 				   dropped,
 	  out		 = mac
 	  );

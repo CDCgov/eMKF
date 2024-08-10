@@ -1,9 +1,9 @@
 /*  
- * This file illustrates the use of the enhanced Modified Kalman Filter (MKF) macro (eMKF, v13) using example from:
+ * This file illustrates the use of the enhanced Modified Kalman Filter (MKF) macro using the example from:
  *
  * Talih M, Rossen LM, Patel P, Earp M, Parker JD. Technical Guidance for Using the Modified Kalman Filter 
  * in Small Domain Estimation at the National Center for Health Statistics. National Center for Health Statistics. 
- * Vital Health Stat 2(209). 2024. DOI: https://dx.doi.org/10.15620/cdc:xxxxxx.
+ * Vital Health Stat 2(209). 2024. DOI: https://dx.doi.org/10.15620/cdc:157496.
  *
  * Main methodological differences between the enhanced and earlier MKF macros are described in README.md
  */
@@ -63,7 +63,7 @@ run;
 proc print data=NHANESobesity(obs=20);
 run;
 
-/* Compile the enhanced Modified Kalman Filter macro (eMKF, v13) */
+/* Compile the enhanced Modified Kalman Filter macro */
 %include "&user_path\eMKF\MKFmacro\emkf_macro.sas";
 
 /* Conduct Bayesian model averaging estimation */

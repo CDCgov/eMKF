@@ -1,5 +1,5 @@
 /*  
- * This file tests the enhanced Modified Kalman Filter (MKF) macro (eMKF, v13) and compares its output against the original MKF macro
+ * This file tests the enhanced Modified Kalman Filter (MKF) macro and compares its output against the original MKF macro
  * Additional test cases for eMKF are also provided
  *
  * Main methodological differences between the enhanced and earlier MKF macros are described in README.md
@@ -78,7 +78,7 @@ run;
 /* Read NHANES data from CSV file: obesity data with years 1999-2000 through 2017-March 2020, used in:
  * Talih M, Rossen LM, Patel P, Earp M, Parker JD. Technical Guidance for Using the Modified Kalman Filter 
  * in Small Domain Estimation at the National Center for Health Statistics. National Center for Health Statistics. 
- * Vital Health Stat 2(209). 2024. DOI: https://dx.doi.org/10.15620/cdc:xxxxxx.
+ * Vital Health Stat 2(209). 2024. DOI: https://dx.doi.org/10.15620/cdc:157496.
  */
 data NHANESobesity    ; 
 	%let _EFIERR_ = 0;
@@ -141,7 +141,7 @@ run;
 
 /**************************Comparison runs using extended MKF (eMKF) ********************************/
 
-/* Compile extended MKF macro (eMKF v13) */
+/* Compile enhanced MKF macro */
 %include "&user_path\eMKF\MKFmacro\emkf_macro.sas";
 
 /***************/
