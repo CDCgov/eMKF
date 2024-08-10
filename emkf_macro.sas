@@ -1,5 +1,5 @@
 /*
- * Latest revision: 02-Aug-2024
+ * Version 1.4 10-Aug-2024
  *
  * eMKF: Expansion of RAND's MKF macro to:
  *
@@ -21,17 +21,17 @@
  * Macros defined in this file:
  *
  * - MKF (main) .............................................................. line    41
- * - bayesfit (Bayesian estimation workhorse) ................................ line  3723
- * - bayesBMA (Bayesian model averaging workhorse, via mixture prior) ........ line  5013
- * - htrp (ML-based estimation workhorse) .................................... line  6301
- * - htrp2d (ML-based estimation workhorse for 2 outcomes) ................... line  7793
- * - reformat (set up of dataset for analysis) ............................... line  9761
- * - _counts_, zeros, thevacompr, etc. (various utility macros) .............. line 10188
- * - gibbs_uds_compile_EP (Gibbs sampler for true state predictions) ......... line 10351
- * - gibbs_uds_compile_RP (Gibbs sampler for random sampling variances) ...... line 10433
- * - gibbs_uds_compile_MP (Gibbs samplers for mean hyper-parameters) ......... line 10470
- * - gibbs_uds_compile_CP (Gibbs samplers for regression coefficients) ....... line 10646
- * - gibbs_uds_compile_FP (Gibbs samplers for model flags) ................... line 12795
+ * - bayesfit (Bayesian estimation workhorse) ................................ line  3645
+ * - bayesBMA (Bayesian model averaging workhorse, via mixture prior) ........ line  4925
+ * - htrp (ML-based estimation workhorse) .................................... line  6205
+ * - htrp2d (ML-based estimation workhorse for 2 outcomes) ................... line  7697
+ * - reformat (set up of dataset for analysis) ............................... line  9664
+ * - _counts_, zeros, thevacompr, etc. (various utility macros) .............. line 10082
+ * - gibbs_uds_compile_EP (Gibbs sampler for true state predictions) ......... line 10245
+ * - gibbs_uds_compile_RP (Gibbs sampler for random sampling variances) ...... line 10327
+ * - gibbs_uds_compile_MP (Gibbs samplers for mean hyper-parameters) ......... line 10364
+ * - gibbs_uds_compile_CP (Gibbs samplers for regression coefficients) ....... line 10540
+ * - gibbs_uds_compile_FP (Gibbs samplers for model flags) ................... line 12689
  *
  */
 
@@ -257,8 +257,8 @@ comparedata, comparedto  : (eMKF) options from MKF allowing for estimating dispa
 %local _oo1_ _oo2_ ui uii uj uk un um uvar newuvar ug uloc
 	   flag1 flag2 flag3 flag4 flag5 flag6 flag7 flag1f flag2f flag3f flag1a flag2a flag3a 
 	   crep run1 run2 run3 Bayesian _chainseed 
-       xtrakeep22 toprint toprint2 _ssby _ssn _thekeeps _thekeepsb _thekeep1 /*_thekeep1a*/ _thekeep1b _thekeep2 _thekeep3 _thet 
-	   emkfkeep emkfrename _BMAmodel _slopes _rtimess pmds a_pmds pm _pm _igrp_ _t_ _comp2;
+       xtrakeep22 toprint toprint2 _ssby _ssn _thekeeps _thekeepsb _thekeep1 _thekeep1b _thekeep2 _thekeep3 _thet 
+	   emkfkeep emkfrename _BMAmodel _slopes _rtimess _igrp_ _t_ _comp2;
 
 /* eMKF: Added error check for the length of &out prefix */
 %if &out = %str() or %length(&out) > 16 %then %do;
@@ -292,7 +292,7 @@ comparedata, comparedto  : (eMKF) options from MKF allowing for estimating dispa
 
 /* eMKF: Added error check if both slopes and bayesmodel are empty */
 %if &Bayesmodel = %str() and &slopes = %str() %then %do;
-	%put ERROR: There appears to be no estimation method specified. Please check.;
+	%put ERROR: There appears to be no estimation method specified: Please check!;
 	proc iml;
 		print "  Error Note:";
 		print "  There appears to be no estimation method specified. Please check. ";
@@ -308,10 +308,12 @@ comparedata, comparedto  : (eMKF) options from MKF allowing for estimating dispa
 		%let uvar=%scan(&slopes, &ui);
 		%if %upcase(&uvar) ^=INDEP_CUBIC and %upcase(&uvar) ^=INDEP_QUAD and %upcase(&uvar) ^=INDEP_LINEAR and 
     		%upcase(&uvar) ^=COMMON_CUBIC and %upcase(&uvar) ^=COMMON_QUAD and %upcase(&uvar) ^=COMMON_LINEAR and %upcase(&uvar) ^=DROPPED %then %do;
-				%put ERROR: &uvar is not a supported ML model specification. Model(s) must be one (or more) of indep_cubic, indep_quad, indep_linear, common_cubic, common_quad, common_linear, or dropped;
+				%put ERROR: &uvar is not a supported ML model specification; 
+                %put ERROR- Model(s) must be one (or more) of indep_cubic, indep_quad, indep_linear, common_cubic, common_quad, common_linear, or dropped;
 				proc iml;
 					print "  Error Note:";
-					print "  Specified ML model(s) not supported. Model(s) must be one (or more) of indep_cubic, indep_quad, indep_linear, common_cubic, common_quad, common_linear, or dropped. ";
+					print "  Specified ML model(s) not supported.";
+                    print "  Model(s) must be one (or more) of indep_cubic, indep_quad, indep_linear, common_cubic, common_quad, common_linear, or dropped. ";
 				quit;
 				%return;
 		%end;
@@ -330,10 +332,12 @@ comparedata, comparedto  : (eMKF) options from MKF allowing for estimating dispa
 			%upcase(&uvar) ^=FULL_CUBIC and %upcase(&uvar) ^=FULL_QUAD and %upcase(&uvar) ^=FULL_LINEAR and 
 			%upcase(&uvar) ^=INDEP_CUBIC and %upcase(&uvar) ^=INDEP_QUAD and %upcase(&uvar) ^=INDEP_LINEAR and 
     		%upcase(&uvar) ^=COMMON_CUBIC and %upcase(&uvar) ^=COMMON_QUAD and %upcase(&uvar) ^=COMMON_LINEAR and %upcase(&uvar) ^=DROPPED %then %do;
-			%put ERROR: &uvar is not a supported Bayesian model specification. Model(s) must be one (or more) of bma_cubic, bma_quad, bma_linear, full_cubic, full_quad, full_linear, indep_cubic, indep_quad, indep_linear, common_cubic, common_quad, common_linear, or dropped;
+			%put ERROR: &uvar is not a supported Bayesian model specification;
+            %put ERROR- Model(s) must be one (or more) of bma_cubic, bma_quad, bma_linear, full_cubic, full_quad, full_linear, indep_cubic, indep_quad, indep_linear, common_cubic, common_quad, common_linear, or dropped;
 			proc iml;
 				print "  Error Note:";
-				print "  Specified Bayesian model(s) not supported. Model(s) must be one (or more) of bma_cubic, bma_quad, bma_linear, full_cubic, full_quad, full_linear, indep_cubic, indep_quad, indep_linear, common_cubic, common_quad, common_linear, or dropped. ";
+				print "  Specified Bayesian model(s) not supported."; 
+                print "  Model(s) must be one (or more) of bma_cubic, bma_quad, bma_linear, full_cubic, full_quad, full_linear, indep_cubic, indep_quad, indep_linear, common_cubic, common_quad, common_linear, or dropped. ";
 			quit;
 			%return;
 		%end;
@@ -354,7 +358,7 @@ comparedata, comparedto  : (eMKF) options from MKF allowing for estimating dispa
 %if &outcome2 ^=%str() %then %let _oo2_=%scan(&outcome2, 1);
 
 /*eMKF: Initialize macro variables for use in symbolic calculations/operations */
-%let _thet=; %let _thekeeps=; %let _thekeepsb=; %let _thekeep1=; %let _thekeep1b=; /*%let _thekeep1a=;*/
+%let _thet=; %let _thekeeps=; %let _thekeepsb=; %let _thekeep1=; %let _thekeep1b=;
 %let _thekeep2= &by &group &time; 
 %let _thekeep3=;
 %if &time = %str() %then %let _thekeep2 = &_thekeep2 _time; /*eMKF: this was introduced in MKF to deal with data in format 1*/
@@ -437,18 +441,13 @@ run;
 data _junk_ _freq1_ _freq2_ _freq3_;
 run;
 
-/* eMKF: Original RAND macro assumed < 10 groups and timepoints. This implementation allows up to 9999 groups, timepoints, and strata. */
+/* eMKF: Original RAND macro assumed < 10 groups and timepoints at this point in the code. Here, we do away with this assumption. */
 data _junk_;
   set _bayesdata_;
-  _rep0000 = put(_rep, z4.);
-  _group0000_ = put(_group_, z4.);
-  _time0000 = put(_time, z4.);
-  _name_= compress(_rep0000 || _group0000_ || _time0000); /*eMKF: format with leading zeroes for correct sort order */
   if _y=. then delete;
   if _se=. then delete;
   %if %scan(&outcome2,1) ^=%str() and %scan(&se2,1) ^=%str() %then if _y2=.  then delete;;;
   %if %scan(&outcome2,1) ^=%str() and %scan(&se2,1) ^=%str() %then if _se2=. then delete;;;
-  drop _rep0000 _group0000_ _time0000;
 run;
 
 proc freq data=_junk_ noprint;
@@ -537,26 +536,12 @@ data _null_;
   if stop ne 1 then call symput("run2" , one);
 run;
 
+%let run2= %eval(&run2 +0);
 %let run1= %eval(&run1 +0);
 
-%if &run1=0 %then %do;
-  /* This is a double precaution to make sure that someone did not forget to specify &by */
-  proc sort data=_junk_;
-     by _name_;
-  run;
-  data _junk_;
-    set _junk_;
-    by _name_;
-    if first._name_ then _id=0;
-    _id+1;
-    _one=1;
-    if _id =2 then call symput("run1" , _one);
-  run;
-  %let run1= %eval(&run1 +0);
-%end;
-
+/* eMKF: Precaution to ensure groups and timepoints are consistent across &by strata */
 %if &by ^= %str() and &run1 = 0 %then %do;
-  /* eMKF: Another precaution to ensure groups and timepoints are consistent across &by strata */
+
   %let run3 = 0;
   proc freq data=_freq2_ noprint;
     tables ngroup /list out=_freq3_;
@@ -586,14 +571,12 @@ run;
   %let run1= %eval(&run3 +0);
 %end;
 
-%let run2= %eval(&run2 +0);
-
 proc datasets nolist;
   delete _junk_ _freq1_ _freq2_ _freq3_;
 run ;
 
 %if &run1=0 and &run2=0 %then %do;
-	%put ERROR: There appears to be no data to work with. Please check;
+	%put ERROR: There appears to be no data to work with: Please check!;
 	proc iml;
 	  print "  Error Note:";
 	  print "  There appears to be no data to work with. Please check. ";
@@ -602,25 +585,25 @@ run ;
 %end;
 
 %if &run1=1 and &run2=0 %then %do;
-	%put ERROR: Please check your data. The number of valid timepoints is inconsistent across groups;
+	%put ERROR: Please check your data: The number of valid timepoints is inconsistent across groups;
 	proc iml;
 	  print "  Error Note:";
 	  print "  An error occurred with your data. ";
-	  print "    Check the data to make sure there are no missing values for means/SEs or only zero SEs,  ";
-	  print "    and that all the groups have data for the same number of timepoints (&time).  ";
+	  print "  Check the data to make sure there are no missing values for means/SEs or only zero SEs,  ";
+	  print "  and that all the groups have data for the same number of timepoints (&time).  ";
 	  print "  You may need to combine some groups and/or timepoints to avoid this problem.  ";
 	quit;
 	%return; /*eMKF: added return functionality for easier debugging*/
 %end;
 
 %if &run1=1 and &run2=1 %then %do;
-	%put ERROR: Please check your data. The number of valid timepoints is inconsistent across groups and strata;
-	%put ERROR- This problem occurred in at least one subgroup.;
+	%put ERROR: Please check your data: The number of valid timepoints is inconsistent across groups and strata;
+	%put ERROR- This problem occurred in at least one subgroup;
 	proc iml;
 	  print "  Error Note:";
 	  print "  An error occurred with your data. ";
-	  print "    Check the data to make sure there are no missing values for means/SEs or only zero SEs,  ";
-	  print "    and that all the groups and strata have data for the same number of timepoints (&time).  ";
+	  print "  Check the data to make sure there are no missing values for means/SEs or only zero SEs,  ";
+	  print "  and that all the groups and strata have data for the same number of timepoints (&time).  ";
 	  print "  You may need to combine some groups and/or timepoints to avoid this problem.  ";
 	quit;
 	%return; /*eMKF: added return functionality for easier debugging*/
@@ -636,12 +619,12 @@ run ;
 	%let ug = %eval(&ug + 0);
 	%if &ug =0 %then %let run1=1;
 	%if &ug =0 %then %do;
-		%put ERROR: Please check your data. You are using two outcomes &outcome and &outcome2;
-		%put ERROR- Those outcomes or their standard errors should be of the same format. Check that and rerun the model;
+		%put ERROR: Please check your data: You are using two outcomes &outcome and &outcome2;
+		%put ERROR- Those outcomes or their standard errors should be of the same format: Check that and rerun the model!;
 		proc iml;
 		  print "  Error Note:";
 		  print "  An error occurred with your data. ";
-		  print "    Check the data to make sure that both outcomes and SEs are in the same format.  ";
+		  print "  Check the data to make sure that both outcomes and SEs are in the same format.  ";
 		quit;
 		%return; /*eMKF: added return functionality for easier debugging*/
 	%end;
@@ -695,6 +678,18 @@ run ;
 
 	%if &slopes ^=%str() %then %do;
 
+		/* eMKF: Guard against too many groups/timepoints: code for current implementation cannot handle more than 204 groups or more than 5508 data points */
+		%if (&ug > 204 or %eval(&ug*&un) > 5508) %then %do;
+			%put ERROR: Code for current implementation of this macro cannot handle more than 204 groups or more than 5508 data points (group by time) per stratum;
+			%put ERROR- Please reduce the number of groups and/or timepoints;
+			proc iml;
+			  print "  Error Note:";
+			  print "  Code for current implementation of this macro cannot handle more than 204 groups or more than 5508 data points (group by time) per stratum. ";
+			  print "  Please reduce the number of groups and/or timepoints. ";
+			quit;
+			%return;
+		%end;
+
 		/* eMKF: Make sure there are enough time points to fit the desired trends (up to cubic) */
 
 		%if (&un < 2) %then %do; /*eMKF: minimal check for 2+ points */
@@ -723,7 +718,7 @@ run ;
 				%let uvar=%scan(&slopes, &ui);
 
 				%if (%upcase(&uvar) = INDEP_LINEAR or %upcase(&uvar) = COMMON_LINEAR) and (&un < 5) %then %do;
-					  %put ERROR: At least 5 timepoints are recommended to fit linear trends. You may try dropping the time trends instead;
+					  %put ERROR: At least 5 timepoints are recommended to fit linear trends: You may try dropping the time trends instead;
 					  proc iml;
 					    print "  Error Note:";
 					    print "  At least 5 timepoints are recommended to fit linear trends. You may try dropping the time trends instead. ";
@@ -731,7 +726,7 @@ run ;
 					  %return;
 				%end;
 				%if (%upcase(&uvar) = INDEP_QUAD or %upcase(&uvar) = COMMON_QUAD) and (&un < 6) %then %do;
-					  %put ERROR: At least 6 timepoints are recommended to fit quadratic trends. You may try linear trends instead;
+					  %put ERROR: At least 6 timepoints are recommended to fit quadratic trends: You may try linear trends instead;
 					  proc iml;
 					    print "  Error Note:";
 					    print "  At least 6 timepoints are recommended to fit quadratic trends. You may try linear trends instead. ";
@@ -739,7 +734,7 @@ run ;
 	                  %return;
 				%end;
 				%if (%upcase(&uvar) = INDEP_CUBIC or %upcase(&uvar) = COMMON_CUBIC) and (&un < 7) %then %do;
-					%put ERROR: At least 7 timepoints are recommended to fit cubic trends. You may try quadratic or linear trends instead;
+					%put ERROR: At least 7 timepoints are recommended to fit cubic trends: You may try quadratic or linear trends instead;
 				  	proc iml;
 				   	  print "  Error Note:";
 				   	  print "  At least 7 timepoints are recommended to fit cubic trends. You may try quadratic or linear trends instead. ";
@@ -853,9 +848,8 @@ run ;
 
 			%end;
 
-			/* eMKF: clean-up */
+			/* eMKF: clean-up. Deleting model-specific results but those could have useful information for the advanced user  */
 			proc datasets nolist;
-			  /* eMKF: Deleting model-specific results but those could have useful information for the advanced user */
 			  delete &out._covY &out._data &out._H &out._predvar ;
 			run ;
 			quit;
@@ -1498,7 +1492,7 @@ run ;
 
 			/* eMKF: clean-up */
 			proc datasets nolist;
-			  delete _junk_ _loglike_ _loglike2_ _KF_covY /*_KF2_covY*/
+			  delete _junk_ _loglike_ _loglike2_ _KF_covY
 			  		 /* eMKF: Deleting model-specific results but those could have useful information for the advanced user */
 					 %if %upcase(&flag1)=YES %then _KF_INDEP_CUBIC_: ;
 		             %if %upcase(&flag2)=YES %then _KF_INDEP_QUAD_: ;
@@ -1523,6 +1517,18 @@ run ;
 
 		/* eMKF: Total number of Bayesian models requested */
 		%let uii = %_counts_(&Bayesmodel);
+
+		/* eMKF: Guard against too many groups/timepoints: code for current implementation cannot handle more than 204 groups or more than 5508 data points */
+		%if (&ug > 204 or %eval(&ug*&un) > 5508) %then %do;
+			%put ERROR: Code for current implementation of this macro cannot handle more than 204 groups or more than 5508 data points (group by time) per stratum;
+			%put ERROR- Please reduce the number of groups and/or timepoints;
+			proc iml;
+			  print "  Error Note:";
+			  print "  Code for current implementation of this macro cannot handle more than 204 groups or more than 5508 data points (group by time) per stratum. ";
+			  print "  Please reduce the number of groups and/or timepoints. ";
+			quit;
+			%return;
+		%end;
 
 		/* eMKF: Make sure there are enough time points to fit the desired trends (up to cubic) */
 
@@ -1553,7 +1559,7 @@ run ;
 
 				%if (%upcase(&uvar) = INDEP_LINEAR or %upcase(&uvar) = COMMON_LINEAR or 
 					 %upcase(&uvar) = FULL_LINEAR or %upcase(&uvar) = BMA_LINEAR) and (&un < 5) %then %do;
-					  %put ERROR: There are not enough time points to fit linear trends. You may try dropping the time trends instead;
+					  %put ERROR: There are not enough time points to fit linear trends: You may try dropping the time trends instead;
 					  proc iml;
 					   print "  Error Note:";
 					   print "  At least 5 timepoints are recommended to fit linear trends. You may try dropping the time trends instead. ";
@@ -1562,7 +1568,7 @@ run ;
 				%end;
 				%if (%upcase(&uvar) = INDEP_QUAD or %upcase(&uvar) = COMMON_QUAD or 
 					 %upcase(&uvar) = FULL_QUAD or %upcase(&uvar) = BMA_QUAD) and (&un < 6) %then %do;
-					  %put ERROR: At least 6 timepoints are recommended to fit quadratic trends. You may try linear trends instead;
+					  %put ERROR: At least 6 timepoints are recommended to fit quadratic trends: You may try linear trends instead;
 					  proc iml;
 					   print "  Error Note:";
 					   print "  At least 6 timepoints are recommended to fit quadratic trends. You may try linear trends instead. ";
@@ -1571,7 +1577,7 @@ run ;
 				%end;
 				%if (%upcase(&uvar) = INDEP_CUBIC or %upcase(&uvar) = COMMON_CUBIC or 
 					 %upcase(&uvar) = FULL_CUBIC or %upcase(&uvar) = BMA_CUBIC) and (&un < 7) %then %do;
-					%put ERROR: At least 7 timepoints are recommended to fit cubic trends. You may try quadratic or linear trends instead;
+					%put ERROR: At least 7 timepoints are recommended to fit cubic trends: You may try quadratic or linear trends instead;
 				  	proc iml;
 				   	 print "  Error Note:";
 				   	 print "  At least 7 timepoints are recommended to fit cubic trends. You may try quadratic or linear trends instead. ";
@@ -1616,12 +1622,12 @@ run ;
 		%if &BayesmodelAvg = %str() %then %let BayesmodelAvg = NO;
 		%if %upcase(&BayesmodelAvg) = YES and (&flag1f = 1 or &flag2f = 1 or &flag3f = 1) %then %do;
 		    %put ;
-			%put Because a fully Bayesian model was requested, no model averaging will be applied;;
+			%put Because a fully Bayesian model was requested, no model averaging will be applied;
 			%let BayesmodelAvg = NO;
 		%end;
 		%if %upcase(&BayesmodelAvg) = YES and &flag1a ^= 1 and &flag2a ^= 1 and &flag3a ^= 1 and &uii = 1 %then %do;
 		    %put ;
-			%put Because only one Bayesian model was specified, no model averaging will be applied;;
+			%put Because only one Bayesian model was specified, no model averaging will be applied;
 			%let BayesmodelAvg = NO;
 		%end;
 		%if &flag1a = 1 or ((&flag1 = 1 or &flag4 = 1) and (&BayesmodelAvg = YES)) %then %do;
@@ -1720,7 +1726,7 @@ run ;
 		%if &flag3a = 1 			  %then %gibbs_uds_compile_FP(uvar=bma_linear,    g=&ug, n=&un, loc=&cmploc);; 
 
 		/* eMKF: Start model fitting loop(s) (tuning loop from original MKF is now incorporated in the call to proc mcmc) */
-		%put Start model fitting loop(s) via PROC MCMC; 
+		%put Start Bayesian model fitting loop(s); 
 
 		/* eMKF: to avoid larger dataset size than necessary, initialize one posterior log file per replication */
 		data _bayesdata1_ &out._bayes &out._bayesparm &out._bayeslogGR ;
@@ -1791,8 +1797,6 @@ run ;
 					%let _thekeep1b = &_thekeep1b pred_Bayes_&uvar =pred&newuvar predse_Bayes_&uvar=rmse&newuvar;
 					%let _thekeeps = &_thekeeps  pred&newuvar=&_oo1_._pred&newuvar  rmse&newuvar=&_oo1_._se&newuvar;
 					%let _thekeepsb = &_thekeepsb  pred&newuvar=&_oo1_._pred&newuvar  rmse&newuvar=&_oo1_._se&newuvar;
-					/* eMKF: multiplier no longer used for disparities calculations, as all pairs are now included */
-					/*%let _thekeep1a = &_thekeep1a pred_Bayes_&uvar = multiplier * pred_Bayes_&uvar %str(;) ;*/ 
 					%let _thekeep2 = &_thekeep2 pred_Bayes_&uvar predse_Bayes_&uvar;
 					%let _thekeep3 = &_thekeep3 &out.(keep= pred_Bayes_&uvar) &out.(keep= predse_Bayes_&uvar);
 				%end;
@@ -1905,7 +1909,7 @@ run ;
 					  /* eMKF: all pairwise differences -- this differs from original MKF where only the unique pairs were tracked */
 					  /*       this change is made, here, for consistency with the new ratio calculations, below */
 					  %do _idf=1 %to &ug;   
-					  	  %do _jdf=1 %to &ug; /*%do _jdf=1 %to &_idf; */
+					  	  %do _jdf=1 %to &ug;
 						  	  groupdif_&_idf._&_jdf = eta&un._&_idf - eta&un._&_jdf ;
 						  %end;
 					  %end;
@@ -2228,27 +2232,17 @@ run ;
 				  ;
 				run;
 
-				/*eMKF: Little detour to be able to loop over the columns and set up absolute value calculations symbolically */
-				%let pmds = ; %let _pm=0; %let pm = ; %let a_pmds = ;
-				proc sql noprint;
-					select name into :pmds separated by ' ' from dictionary.columns
-					where upcase(memname)=upcase('_bayeslogrkmn_') and 
-						  name ne "chain" and name ne "half" and name ne "_TYPE_" and name ne "_FREQ_";
-				quit;
-				
-				%do _pm=1 %to %_counts_(&pmds);
-					%let pm = %scan(&pmds, &_pm);
-					%let a_pmds = &a_pmds &pm = abs(&pm) %str(;) ;
-				%end;
-
-				/*eMKF: Next, apply absolute value on the selected variables */
+			   /*eMKF: Next, fold by applying absolute value on all numeric variables */
 				data _bayeslogfl_;
 				  set _bayeslogfl_;
-				  &a_pmds;;
+				  array Nums[*] _numeric_;
+				  do i = 1 to dim(Nums);
+				    Nums[i] = abs(Nums[i]);
+				  end;
+				  drop i;
 				run;
 
 				/*eMKF: Now proceed as before using the folded draws */
-
 				proc rank data=_bayeslogfl_ out=_bayeslogflrk_ ties=mean normal=blom;
 				  var %if %upcase(&uvar) = BMA_CUBIC or %upcase(&uvar) = BMA_QUAD or %upcase(&uvar) = BMA_LINEAR %then flg;
 					  %if %upcase(&randomVars) = YES %then varr: ;
@@ -2260,7 +2254,6 @@ run ;
 					  eta:
 				  ;
 				run;
-
 				proc means data=_bayeslogflrk_ noprint;
 				  by chain half;
 				  var %if %upcase(&uvar) = BMA_CUBIC or %upcase(&uvar) = BMA_QUAD or %upcase(&uvar) = BMA_LINEAR %then flg;
@@ -2274,7 +2267,6 @@ run ;
 				  ;
 				  output out=_bayeslogflrkmn_ mean= ;
 				run;
-
 				proc means data=_bayeslogflrk_ noprint;
 				  by chain half;
 				  var %if %upcase(&uvar) = BMA_CUBIC or %upcase(&uvar) = BMA_QUAD or %upcase(&uvar) = BMA_LINEAR %then flg;
@@ -2288,7 +2280,6 @@ run ;
 				  ;
 				  output out=_bayeslogflrkvr_ var= ;
 				run;
-
 				proc means data=_bayeslogflrkvr_ noprint; 
 				  var %if %upcase(&uvar) = BMA_CUBIC or %upcase(&uvar) = BMA_QUAD or %upcase(&uvar) = BMA_LINEAR %then flg;
 					  %if %upcase(&randomVars) = YES %then varr: ;
@@ -2301,7 +2292,6 @@ run ;
 				  ;
 				  output out=_bayeslogflrkwv_ mean= ;
 				run;
-
 				proc means data=_bayeslogflrkmn_ noprint;
 				  var %if %upcase(&uvar) = BMA_CUBIC or %upcase(&uvar) = BMA_QUAD or %upcase(&uvar) = BMA_LINEAR %then flg;
 					  %if %upcase(&randomVars) = YES %then varr: ;
@@ -2314,7 +2304,6 @@ run ;
 				  ;
 				  output out=_bayeslogflrkbv_ var= ;
 				run;
-
 				proc means data=_bayeslogflrkmn_ noprint;
 				  var %if %upcase(&uvar) = BMA_CUBIC or %upcase(&uvar) = BMA_QUAD or %upcase(&uvar) = BMA_LINEAR %then flg;
 					  %if %upcase(&randomVars) = YES %then varr: ;
@@ -2366,8 +2355,7 @@ run ;
 				/* eMKF: Issue warning message for poor mixing */
 				%if &uk = 0 %then %do;
 					%put WARNING: Gelman-Rubin diagnostics at the threshold &GRthreshold suggest poor mixing with &chains chains;
-					%put WARNING- Model predictions may be unreliable based on this threshold value: see dataset &out._bayeslogGR_ ;
-					%put WARNING- Consider investigating the chain-specific diagnostic plots and modifying the MCMC options ;
+					%put WARNING- Model predictions may be unreliable based on this threshold value ;
 
 					proc iml;
 					  print " Warning: Gelman-Rubin diagnostics at the threshold &GRthreshold suggest poor mixing with &chains chains";
@@ -2928,10 +2916,17 @@ run ;
 			run;
 
 			%if &_comp2 = %str() and %upcase(&_comp2) ^= MIN and %upcase(&_comp2) ^= MAX %then %do;
+			    /*eMKF: Shortened warning message in log*/
 				%put WARNING: The comparison group &comparedto is not a &group or a recognized reference value;
-				%put WARNING- Check to make sure the value &comparedto is correct. ;
-				%put WARNING- No comparison will be printed at this point.;
-				%put WARNING- All comparisons could be found in the &out._bayes data. ;
+				%put WARNING- No comparison will be printed at this point;
+
+				proc iml; /*eMKF: Added warning message to HTML output*/
+				    print " Warning: The comparison group &comparedto is not a &group or a recognized reference value";
+					print "  		 Check to make sure the value &comparedto is correct";
+					print "          No comparison will be printed at this point";
+                    print "          All comparisons could be found in the &out._bayes data ";
+				quit;
+
 			%end;
 
 			proc datasets nolist;
@@ -2956,17 +2951,11 @@ run ;
 			  if upcase(compress("&comparedto")) ^= "MAX" and upcase(compress("&comparedto")) ^= "MIN" then do;
 			  	if upcase(compress(&group)) = "MAX" or upcase(compress(diff_&group)) = "MIN" then delete;
 			  end;
-			  /* eMKF: multiplier disabled due to inclusion of all pairs in calculations */
-			  /*multiplier=1;*/
-			  /*if upcase(compress(&group)) = upcase(compress("&comparedto")) then multiplier =-1;*/
-			  /*if _disparity = "difference" then &_thekeep1a;;*/
 			  &group._1 = &group;
 			  &group._2 = diff_&group;
-			  /*if upcase(compress(&group))  = upcase(compress("&comparedto")) then &group._1 = diff_&group;*/
-			  /*if upcase(compress(&group)) ^= upcase(compress("&comparedto")) then &group._2 = diff_&group;*/
 			  _thekey = 1;
 			  rename &_thekeep1b;;
-			  drop _avgse _y _se &outcome &se &outcome2 &se2 impute _diffgrp2_ _oldtime _newtime /*multiplier*/ predvar_Bayes_: 
+			  drop _avgse _y _se &outcome &se &outcome2 &se2 impute _diffgrp2_ _oldtime _newtime predvar_Bayes_: 
 			       %if &by ^=%str() %then _avgseb imputeb;
 				   %if %upcase(&randomVars) = YES %then _avgn _n;
 				   %if %upcase(&randomVars) = YES and &by ^=%str() %then _avgnb;
@@ -3107,6 +3096,12 @@ run ;
 	    %put ;
 		%put Tabulated printout of MKF predictions for the last time point was turned off by the user;
 		%put Model predictions are in dataset &out._pred;
+
+		proc iml;
+		    print " Note: The tabulated printout of MKF predictions for the last time point was turned off by the user";
+			print "  	  Model predictions can always be found in dataset &out._pred";
+		quit;
+
 	%end;
 	%else %do;
 
@@ -3296,54 +3291,29 @@ run ;
 
 		  /*eMKF: CIs formatted to account for extra space for the minus sign */
 		  %if &comparedto ^=%str() and %upcase(&Bayesian)  = YES %then %do;
-
 			  if _disparity = "difference" or _disparity = "" then do;
 				  if prediction -(1.96*predse) ge 0 and prediction +(1.96*predse) ge 0 
 					then pred_ci = "[ "||compress(put(prediction -(1.96*predse), 16.&pdigit))||",  "|| compress(put(prediction +(1.96*predse), 16.&pdigit))||"]";
-
 				  if prediction -(1.96*predse)  < 0 and prediction +(1.96*predse) ge 0 
 					then pred_ci = "["||compress(put(prediction -(1.96*predse), 16.&pdigit))||",  "|| compress(put(prediction +(1.96*predse), 16.&pdigit))||"]";
-
 				  if prediction -(1.96*predse) ge 0 and prediction +(1.96*predse)  < 0 
 					then pred_ci = "[ "||compress(put(prediction -(1.96*predse), 16.&pdigit))||", "|| compress(put(prediction +(1.96*predse), 16.&pdigit))||"]";
-
 				  if prediction -(1.96*predse)  < 0 and prediction +(1.96*predse)  < 0 
 					then pred_ci = "["||compress(put(prediction -(1.96*predse), 16.&pdigit))||", "|| compress(put(prediction +(1.96*predse), 16.&pdigit))||"]";
-
-				  if prediction -(1.96*predse)  < 0 and prediction +(1.96*predse)  < 0 then pred_test="    ";
-
 			  end;
-
-			  /* eMKF: Added for printing ratios and their lognormal CIs */
-			  if _disparity = "ratio" and prediction > 0 then do;
+			  if _disparity = "ratio" and prediction > 0 then do; /* eMKF: Added for printing ratios and their lognormal CIs */
 				  pred_ci = "[ "||compress(put(exp(log(prediction) -(1.96*predse/prediction)), 16.&pdigit))||",  "|| compress(put(exp(log(prediction) +(1.96*predse/prediction)), 16.&pdigit))||"]";
-				  if log(prediction) -(1.96*predse/prediction) ge 0 and log(prediction) +(1.96*predse/prediction) ge 0 then pred_test="   ";
-				  if log(prediction) -(1.96*predse/prediction)  < 0 and log(prediction) +(1.96*predse/prediction)  < 0 then pred_test="    ";
 			  end;
-
 		  %end;
 		  %else %do;
-
 			  if prediction -(1.96*predse) ge 0 and prediction +(1.96*predse) ge 0 
 				then pred_ci = "[ "||compress(put(prediction -(1.96*predse), 16.&pdigit))||",  "|| compress(put(prediction +(1.96*predse), 16.&pdigit))||"]";
-
 			  if prediction -(1.96*predse)  < 0 and prediction +(1.96*predse) ge 0 
 				then pred_ci = "["||compress(put(prediction -(1.96*predse), 16.&pdigit))||",  "|| compress(put(prediction +(1.96*predse), 16.&pdigit))||"]";
-
 			  if prediction -(1.96*predse) ge 0 and prediction +(1.96*predse)  < 0 
 				then pred_ci = "[ "||compress(put(prediction -(1.96*predse), 16.&pdigit))||", "|| compress(put(prediction +(1.96*predse), 16.&pdigit))||"]";
-
 			  if prediction -(1.96*predse)  < 0 and prediction +(1.96*predse)  < 0 
 				then pred_ci = "["||compress(put(prediction -(1.96*predse), 16.&pdigit))||", "|| compress(put(prediction +(1.96*predse), 16.&pdigit))||"]";
-
-			  /* Drop asterix for now, we can deal with it later */
-			  /*
-			  if prediction -(1.96*predse) ge 0 and prediction +(1.96*predse) ge 0 then pred_test="**   ";
-			  if prediction -(1.96*predse)  < 0 and prediction +(1.96*predse)  < 0 then pred_test="**    ";
-			  */
-			  if prediction -(1.96*predse) ge 0 and prediction +(1.96*predse) ge 0 then pred_test="   ";
-			  if prediction -(1.96*predse)  < 0 and prediction +(1.96*predse)  < 0 then pred_test="    ";
-
 		  %end;
 
 		  if _i_ in (1, 3) then label="Sample       ";
@@ -3442,15 +3412,13 @@ run ;
 		 %if &time ^=%str() %then  if id=3 then name3=compress("@"||col1)||" '&time'                    ";;;
 		 if id=4 then name3=compress("@"||col1)||" 'Estimation'                    ";
 		 if id=5 then name3=compress("@"||col1)||" ' Point'                     ";
-		 /*if id=6 then name3=compress("@"||col1)||" ' Std. '                     "; */ /* eMKF: changed label from Std. Error to RMSE to avoid confusion */
-		 if id=6 then name3=compress("@"||col1)||" 'RMSE'                     ";
+		 if id=6 then name3=compress("@"||col1)||" 'RMSE'                     "; /* eMKF: changed label from Std. Error to RMSE to avoid confusion */
 		 if id=7 then name3=compress("@"||col1)||" '   Wald 95% CI'                     ";
 		 if id=8 then name3=compress("@"||col1)||" 'Std.'                     ";
 		 if id=9 then name3=compress("@"||col1)||" 'Rel.'                     ";
 
 		 if id=4 then name4=compress("@"||col1)||" '   Type '                    ";
 		 if id=5 then name4=compress("@"||col1)||" 'Estimate'                     ";
-		 /* if id=6 then name4=compress("@"||col1)||" 'Error '                     "; */
 		 if id=8 then name4=compress("@"||col1)||" 'Diff'                     ";
 		 if id=9 then name4=compress("@"||col1)||" 'RMSE'                     ";
 
@@ -3462,14 +3430,12 @@ run ;
 			 if id=5 then name5=compress("@"||col1 -1)||" prediction                      ";
 			 if id=6 then name5=compress("@"||col1)||" predse                     ";
 			 if id=7 then name5=compress("@"||col1)||" pred_ci                     ";
-			 if id=8 then name5=compress("@"||col1)||" pred_test                     ";
 
 			 if id=2 then name6=compress("@"||col1)||" &group._1                 ";
 			 if id=3 then name6=compress("@"||col1)||" group0                    ";
 			 if id=5 then name6=compress("@"||col1 -1)||" prediction                     ";
 			 if id=6 then name6=compress("@"||col1)||" predse                     ";
 			 if id=7 then name6=compress("@"||col1)||" pred_ci                     ";
-			 if id=8 then name6=compress("@"||col1)||" pred_test                     ";
 
 			 %if &by ^=%str() %then if id=1 then name5a=compress("@"||col1)||" &by                     ";;
 			 if id=2 then name5a=compress("@"||col1)||" &group._1                 ";
@@ -3477,14 +3443,12 @@ run ;
 			 if id=5 then name5a=compress("@"||col1)||" prediction                     ";
 			 if id=6 then name5a=compress("@"||col1)||" predse                     ";
 			 if id=7 then name5a=compress("@"||col1)||" pred_ci                     ";
-			 if id=8 then name5a=compress("@"||col1)||" pred_test                     ";
 
 			 if id=2 then name6a=compress("@"||col1)||" &group._1                 ";
 			 if id=3 then name6a=compress("@"||col1)||" group0                    ";
 			 if id=5 then name6a=compress("@"||col1)||" prediction                     ";
 			 if id=6 then name6a=compress("@"||col1)||" predse                     ";
 			 if id=7 then name6a=compress("@"||col1)||" pred_ci                     ";
-			 if id=8 then name6a=compress("@"||col1)||" pred_test                     ";
 
 			 %if &by ^=%str() %then if id=1 then name7=compress("@"||col1)||" '&by'                     ";;
 			 if id=2 then name7=compress("@"||col1)||" '    Disparity Measure'                     ";
@@ -3496,19 +3460,10 @@ run ;
 
 		run;
 
-		%local nname1 nname1a nname1b nname2 nname3 nname4 nname5 nname6 nname5a nname6a nname7 mname1 mname2 mname3;
+		%local nname1 nname1a nname1b nname2 nname3 nname4 nname5 nname6 nname5a nname6a nname7 ;
 
-		%let nname1=;
-		%let nname1a=;
-		%let nname1b=;
-		%let nname2=;
-		%let nname3=;
-		%let nname4=;
-		%let nname5=;
-		%let nname6=;
-		%let nname5a=;
-		%let nname6a=;
-		%let nname7=;
+		%let nname1=; %let nname1a=; %let nname1b=; %let nname2=; %let nname3=; %let nname4=;
+		%let nname5=; %let nname6=; %let nname5a=; %let nname6a=; %let nname7=;
 
 		proc sql noprint;
 		   select name1  into :nname1  separated by ' '  from _freqg_ ;
@@ -3537,22 +3492,6 @@ run ;
 		proc sort data=_junk_;
 		  by %if &comparedto ^=%str() and %upcase(&Bayesian)  = YES %then _disparity; inputorder _i_;
 		run;
-
-		%let mname1=0;
-		%let mname2=0;
-		%let mname3=;
-
-		data _null_;
-		  set _junk_;
-		  _one=1;
-		  if _i_=5 and pred_test="**" then call symput("mname1",_one);
-		  if _i_=5 and pred_test="**" then  call symput("mname2",_one);
-		  call symput("mname3",inputorder);
-		run;
-
-		%let mname1= %eval(&mname1 + 0);
-		%let mname2= %eval(&mname2 + 0);
-		%let mname3= %sysevalf(&mname3 + 0);
 
 		%if %scan(&outcome2,1) ^=%str() and %scan(&se2,1) ^=%str() %then %do;
 			data _junk000_;
@@ -3599,9 +3538,7 @@ run ;
 		   if _i_=2.5 then put &nname1b;
 		   if _i_=3 then put &nname2;
 		   if _i_=4 then put &nname2;
-
-		   /*eMKF: added if-clause to correct warnings in original MKF macro */
-		   %if &comparedto ^=%str() and %upcase(&Bayesian)  = YES %then %do;
+		   %if &comparedto ^=%str() and %upcase(&Bayesian)  = YES %then %do; /*eMKF: added this if-clause to correct warnings in original MKF macro */
 			   if _i_=5 and first.inputorder and _disparity = "difference" 
 				   then put "                         Differences between MKF point estimates by &group            ";
 			   if _i_=5 and first.inputorder and _disparity = "ratio" 
@@ -3614,26 +3551,11 @@ run ;
 			   if _i_=5 and firstp ne 1 and prediction ge 0 then put &nname6a;
 		   %end;
 		   if last.inputorder and impute=1 then put "   Warning:  For this group, user supplied SE=0 were set to average of nonzero values across timepoints";
-		   %if &by ^=%str() %then 
-             if last.inputorder and imputeb=1 then put "   Warning:  For this group, user supplied SE=0 were set to average of nonzero values across strata";;;
-
-		   /*eMKF: added if-clauses to correct warnings in original MKF macro */
-		   %if &comparedto ^=%str() and %upcase(&Bayesian)  = YES %then %do;
-			   %if &mname1 =1  /*and &mname2 = 1*/ %then  
-			   		if last.inputorder and _i_=5 and inputorder=&mname3 then put "  Significance:  ** Difference is statistically different from 0";;;
-			   /*
-			   %if &mname1 =1 and &mname2 =1 %then  
-			   		if last.inputorder and _i_=3 and inputorder=&mname3 then put "        ** for negative significant difference";;;
-			   %if &mname1 =1 and &mname2 ^=1 %then  
-			   		if last.inputorder and _i_=3 and inputorder=&mname3 then put "  Note:  * for positive significant difference";;;
-			   %if &mname1 ^=1 and &mname2 =1 %then  
-			   		if last.inputorder and _i_=3 and inputorder=&mname3 then put "  Note: ** for negative significant difference";;;
-			   */
-		   %end;
+		   %if &by ^=%str() %then if last.inputorder and imputeb=1 then put "   Warning:  For this group, user supplied SE=0 were set to average of nonzero values across strata";;;
 		   if last.inputorder and _i_ ne 5 then put &_flign.*'-';;;;
 		   %if &comparedto ^=%str() and %upcase(&Bayesian)  = YES %then if last.inputorder and _i_=5 then put &_flign.*'-';;;;
-		   /*  %if &by ^=%str() %then if last.&by or last._group_ then put &_flign.*'-';;;
-		   %if &by  =%str() %then if last._group_ then put &_flign.*'-';;;*/
+		   /* %if &by ^=%str() %then if last.&by or last._group_ then put &_flign.*'-';;; */
+		   /* %if &by  =%str() %then if last._group_ then put &_flign.*'-';;; */
 		   return;
 		   newpage:
 		      if _i_ ne 5 then do;
@@ -4085,11 +4007,11 @@ run;
 
 /* eMKF: Constant arrays of hyperparameters to pass to UDS (fully Bayesian setting only) */
 %if %upcase(&btype) = FULL_CUBIC or %upcase(&btype) = FULL_QUAD or %upcase(&btype) = FULL_LINEAR
-	%then %let b1line = &b1line %str(;) array mb1hyp[2] (&bmbeta1 &bpbeta1) ;
+	%then %let b1line = &b1line%str(;) array mb1hyp[2] (&bmbeta1 &bpbeta1) ;
 %if %upcase(&btype) = FULL_CUBIC or %upcase(&btype) = FULL_QUAD
-	%then %let b2line = &b2line %str(;) array mb2hyp[2] (&bmbeta2 &bpbeta2) ;
+	%then %let b2line = &b2line%str(;) array mb2hyp[2] (&bmbeta2 &bpbeta2) ;
 %if %upcase(&btype) = FULL_CUBIC
-	%then %let b3line = &b3line %str(;) array mb3hyp[2] (&bmbeta3 &bpbeta3) ;
+	%then %let b3line = &b3line%str(;) array mb3hyp[2] (&bmbeta3 &bpbeta3) ;
 
 /* eMKF: Named 1-dimensional arrays of unobserved true states and their means 
   (consistent with internal SAS names for random effects in proc mcmc) */
@@ -4099,7 +4021,7 @@ run;
 %do _i = 1 %to &g;
    %do _j = 1 %to &n; 
 		%let etamnarrline = &etamnarrline etamn&_j._&_i;
-		%let etaarrline   = &etaarrline   eta&_j._&_i;
+		%let etaarrline   = &etaarrline eta&_j._&_i;
    %end;
 %end;
 
@@ -4107,7 +4029,7 @@ run;
 %let vline=;
 %if %upcase(&brndvars) = YES %then %do;
 	%let vline = array varr[&g] varr1-varr&g ; 
-	%let vline = &vline %str(;) array vhyp[2] (&bvshape &bvscale) ; /* add array of hyperparameters to pass to UDS */
+	%let vline = &vline%str(;) array vhyp[2] (&bvshape &bvscale) ; /* add array of hyperparameters to pass to UDS */
 %end;
 
 /* eMKF: Dynamic array of effective sample sizes (if applicable) to use with read_array */
@@ -4119,7 +4041,7 @@ run;
 /*****************************************************************/
 
 /* eMKF: Slice sampler, if requested, would apply to selected parameters for which Gibbs sampling is not available */
-%let bslice = %str(;) ;
+%let bslice =%str(;) ;
 %if %upcase(&bslicesampler) = YES %then %let bslice = %str(/slice ;);
 
 /* eMKF: Group-specific AR parameters (if applicable) */
@@ -4129,12 +4051,12 @@ run;
   	%let psiparline2 = &psiparline2 parms mpsi &bslice;			/* mean hyperparameter for mean of psi */
 	%let _i = 0;
 	%do _i = 1 %to &g; 
-		%let psiparline   = &psiparline   psi&_i ; 
-		%let tauparline   = &tauparline   tau&_i ; 
+		%let psiparline   = &psiparline psi&_i ; 
+		%let tauparline   = &tauparline tau&_i ; 
 		%let tausqparline = &tausqparline tausq&_i ; 
-		%let rhoparline   = &rhoparline   rho&_i ; 
-    	%let psiparline2  = &psiparline2  parms psi&_i &bslice;	/* Group-specific psi1 through psi&g  */
-    	%let tauparline2  = &tauparline2  parms tau&_i &bslice;	/* Group-specific innovation SDs tau1 through tau&g */
+		%let rhoparline   = &rhoparline rho&_i ; 
+    	%let psiparline2  = &psiparline2 parms psi&_i &bslice;	/* Group-specific psi1 through psi&g  */
+    	%let tauparline2  = &tauparline2 parms tau&_i &bslice;	/* Group-specific innovation SDs tau1 through tau&g */
 	%end;
 %end;
 %if %upcase(&bARmodel) = COMMON_AR %then %do;
@@ -4284,11 +4206,11 @@ run;
 	%let initlinetau = tau = rand('uniform', &btaul, &btauu); 
 %end;
 %if %upcase(&bARmodel) = INDEP_AR %then %do; /* Group-specific AR parameters */
-    %let initlinepsi = &initlinepsi spsi = rand('uniform', 0.0001, sqrt(1/&bprho)) %str(;) ;		
-    %let initlinepsi = &initlinepsi mpsi = &bmrho + sqrt(1/&bprho)*rand('normal') %str(;) ;
+    %let initlinepsi = &initlinepsi spsi = rand('uniform', 0.0001, sqrt(1/&bprho))%str(;) ;		
+    %let initlinepsi = &initlinepsi mpsi = &bmrho + sqrt(1/&bprho)*rand('normal')%str(;) ;
 	%do _i = 1 %to &g;
-		%let initlinepsi = &initlinepsi psi&_i = mpsi + spsi*rand('normal') %str(;) ;
-		%let initlinetau = &initlinetau tau&_i = rand('uniform', &btaul, &btauu) %str(;) ;
+		%let initlinepsi = &initlinepsi psi&_i=mpsi+spsi*rand('normal')%str(;) ;
+		%let initlinetau = &initlinetau tau&_i=rand('uniform',&btaul,&btauu)%str(;) ;
 	%end;	
 %end;
 
@@ -4309,60 +4231,60 @@ run;
 
 /* eMKF: Initial values for prior mean vector mbetag and precision matrix Dbetag for use with matrix operations */
 %let initmbeta = call zeromatrix(Dbetag);	
-%let initmbeta = &initmbeta %str(;) mbetag[1,1] = &bmalpha %str(;) Dbetag[1,1] = &bpalpha;
+%let initmbeta = &initmbeta%str(;) mbetag[1,1] = &bmalpha%str(;) Dbetag[1,1] = &bpalpha;
 
 /* eMKF: In models other than the fully Bayesian trend models, mbetag and Dbetag are constants */
 %if %upcase(&btype) ^= FULL_CUBIC and %upcase(&btype) ^= FULL_QUAD and %upcase(&btype) ^= FULL_LINEAR and %upcase(&btype) ^= DROPPED
-	%then %let initmbeta = &initmbeta %str(;) mbetag[2,1] = &bmbeta1 %str(;) Dbetag[2,2] = &bpbeta1;
+	%then %let initmbeta = &initmbeta%str(;) mbetag[2,1] = &bmbeta1%str(;) Dbetag[2,2] = &bpbeta1;
 %if %upcase(&btype) = INDEP_CUBIC or %upcase(&btype) = INDEP_QUAD or %upcase(&btype) = COMMON_CUBIC or %upcase(&btype) = COMMON_QUAD 
-	%then %let initmbeta = &initmbeta %str(;) mbetag[3,1] = &bmbeta2 %str(;) Dbetag[3,3] = &bpbeta2;
+	%then %let initmbeta = &initmbeta%str(;) mbetag[3,1] = &bmbeta2%str(;) Dbetag[3,3] = &bpbeta2;
 %if %upcase(&btype) = INDEP_CUBIC or %upcase(&btype) = COMMON_CUBIC 
-	%then %let initmbeta = &initmbeta %str(;) mbetag[4,1] = &bmbeta3 %str(;) Dbetag[4,4] = &bpbeta3;
+	%then %let initmbeta = &initmbeta%str(;) mbetag[4,1] = &bmbeta3%str(;) Dbetag[4,4] = &bpbeta3;
 
 /* eMKF: In fully Bayesian models, mbetag and Dbetag depend on model parameters and are updated accordingly */
 %if %upcase(&btype) = FULL_CUBIC or %upcase(&btype) = FULL_QUAD or %upcase(&btype) = FULL_LINEAR 
-	%then %let initmbeta = &initmbeta %str(;) mbetag[2,1] = mb1 %str(;) Dbetag[2,2] = 1/sb1**2;
+	%then %let initmbeta = &initmbeta%str(;) mbetag[2,1] = mb1%str(;) Dbetag[2,2] = 1/sb1**2;
 %if %upcase(&btype) = FULL_CUBIC or %upcase(&btype) = FULL_QUAD
-	%then %let initmbeta = &initmbeta %str(;) mbetag[3,1] = mb2 %str(;) Dbetag[3,3] = 1/sb2**2;
+	%then %let initmbeta = &initmbeta%str(;) mbetag[3,1] = mb2%str(;) Dbetag[3,3] = 1/sb2**2;
 %if %upcase(&btype) = FULL_CUBIC
-	%then %let initmbeta = &initmbeta %str(;) mbetag[4,1] = mb3 %str(;) Dbetag[4,4] = 1/sb3**2;
+	%then %let initmbeta = &initmbeta%str(;) mbetag[4,1] = mb3%str(;) Dbetag[4,4] = 1/sb3**2;
 
 /* eMKF: Initial values for intercepts */
 %let initlinea=; %let _i = 0;
 %do _i = 1 %to &g; 
-	%let initlinea = &initlinea a&_i = &bmalpha + sqrt(1/&bpalpha)*rand('normal') %str(;) ;
+	%let initlinea = &initlinea a&_i = &bmalpha+sqrt(1/&bpalpha)*rand('normal')%str(;) ;
 %end;
 
 /* eMKF: Initial values for regression parameters */
 %let initlineb1=; %let initlineb2=; %let initlineb3=; %let _i=0;
 %if %upcase(&btype) = FULL_CUBIC %then %do;
 	%do _i = 1 %to &g; 
-		%let initlineb3 = &initlineb3 b3arr&_i = mb3 + sb3*rand('normal') %str(;) ;
+		%let initlineb3 = &initlineb3 b3arr&_i=mb3+sb3*rand('normal')%str(;) ;
 	%end;
 %end;
 %if %upcase(&btype) = FULL_CUBIC or %upcase(&btype) = FULL_QUAD %then %do;
 	%do _i = 1 %to &g; 
-		%let initlineb2 = &initlineb2 b2arr&_i = mb2 + sb2*rand('normal') %str(;) ;
+		%let initlineb2 = &initlineb2 b2arr&_i=mb2+sb2*rand('normal')%str(;) ;
 	%end;
 %end;
 %if %upcase(&btype) = FULL_CUBIC or %upcase(&btype) = FULL_QUAD or %upcase(&btype) = FULL_LINEAR %then %do;
 	%do _i = 1 %to &g; 
-		%let initlineb1 = &initlineb1 b1arr&_i = mb1 + sb1*rand('normal') %str(;) ;
+		%let initlineb1 = &initlineb1 b1arr&_i=mb1+sb1*rand('normal')%str(;) ;
 	%end;
 %end;
 %if %upcase(&btype) = INDEP_CUBIC %then %do;
 	%do _i = 1 %to &g; 
-		%let initlineb3 = &initlineb3 b3arr&_i = &bmbeta3 + sqrt(1/&bpbeta3)*rand('normal') %str(;) ;
+		%let initlineb3 = &initlineb3 b3arr&_i=&bmbeta3+sqrt(1/&bpbeta3)*rand('normal')%str(;) ;
 	%end;
 %end;
 %if %upcase(&btype) = INDEP_CUBIC or %upcase(&btype) = INDEP_QUAD %then %do;
 	%do _i = 1 %to &g; 
-		%let initlineb2 = &initlineb2 b2arr&_i = &bmbeta2 + sqrt(1/&bpbeta2)*rand('normal') %str(;) ;
+		%let initlineb2 = &initlineb2 b2arr&_i=&bmbeta2+sqrt(1/&bpbeta2)*rand('normal')%str(;) ;
 	%end;
 %end;
 %if %upcase(&btype) = INDEP_CUBIC or %upcase(&btype) = INDEP_QUAD or %upcase(&btype) = INDEP_LINEAR %then %do;
 	%do _i = 1 %to &g; 
-		%let initlineb1 = &initlineb1 b1arr&_i = &bmbeta1 + sqrt(1/&bpbeta1)*rand('normal') %str(;) ;
+		%let initlineb1 = &initlineb1 b1arr&_i=&bmbeta1+sqrt(1/&bpbeta1)*rand('normal')%str(;) ;
 	%end;
 %end;
 %if %upcase(&btype) = COMMON_CUBIC %then
@@ -4375,58 +4297,58 @@ run;
 /* eMKF: Initial values for unobserved true states predictions given regression parameters */
 %let _i = 0; %let _j = 0; 
 %if %upcase(&btype) = FULL_CUBIC or %upcase(&btype) = INDEP_CUBIC %then %do;
-  %do _i = 1 %to &g; 
-  	%do _j = 1 %to &n; 
-	  %local initetamnarr&_j._&_i;   /*eMKF: broken up into many macro variables instead of single one to avoid max length error (65534) */
-	  %let initetamnarr&_j._&_i = etamnarr[%eval((&_i-1)*&n+&_j)] = X[&_j,1]*a&_i +X[&_j,2]*b1arr&_i +X[&_j,3]*b2arr&_i +X[&_j,4]*b3arr&_i ;
-	%end;
-  %end;
+    %do _i = 1 %to &g; 
+	    %local initetamnarr&_i;   /*eMKF: broken up into one macro variable per group instead of single combined macro variable to avoid max length error (65534) */
+  	    %do _j = 1 %to &n; 
+	        %let initetamnarr&_i = &&initetamnarr&_i etamnarr[%eval((&_i-1)*&n+&_j)]=X[&_j,1]*a&_i+X[&_j,2]*b1arr&_i+X[&_j,3]*b2arr&_i+X[&_j,4]*b3arr&_i%str(;) ;
+	    %end;
+    %end;
 %end;
 %if %upcase(&btype) = FULL_QUAD or %upcase(&btype) = INDEP_QUAD %then %do;
 	%do _i = 1 %to &g; 
+  	    %local initetamnarr&_i;
   		%do _j = 1 %to &n; 
-			%local initetamnarr&_j._&_i;
-	  		%let initetamnarr&_j._&_i = etamnarr[%eval((&_i-1)*&n + &_j)] = X[&_j,1]*a&_i + X[&_j,1]*b1arr&_i + X[&_j,2]*b2arr&_i ;
+	  		%let initetamnarr&_i = &&initetamnarr&_i etamnarr[%eval((&_i-1)*&n+&_j)]=X[&_j,1]*a&_i+X[&_j,1]*b1arr&_i+X[&_j,2]*b2arr&_i%str(;) ;
 		%end;
 	%end;
 %end;
 %if %upcase(&btype) = FULL_LINEAR or %upcase(&btype) = INDEP_LINEAR %then %do;
 	%do _i = 1 %to &g; 
+  	    %local initetamnarr&_i;
   		%do _j = 1 %to &n; 
-		    %local initetamnarr&_j._&_i;
-			%let initetamnarr&_j._&_i = etamnarr[%eval((&_i-1)*&n + &_j)] = X[&_j,1]*a&_i + X[&_j,2]*b1arr&_i ;
+			%let initetamnarr&_i = &&initetamnarr&_i etamnarr[%eval((&_i-1)*&n+&_j)]=X[&_j,1]*a&_i+X[&_j,2]*b1arr&_i%str(;) ;
 		%end;
 	%end;
 %end;
 %if %upcase(&btype) = COMMON_CUBIC %then %do;
 	%do _i = 1 %to &g; 
+  	    %local initetamnarr&_i;
   		%do _j = 1 %to &n; 
-		    %local initetamnarr&_j._&_i;
-	        %let initetamnarr&_j._&_i = etamnarr[%eval((&_i-1)*&n+&_j)] = X[&_j,1]*a&_i +X[&_j,2]*b1 +X[&_j,3]*b2 +X[&_j,4]*b3 ;
+	        %let initetamnarr&_i = &&initetamnarr&_i etamnarr[%eval((&_i-1)*&n+&_j)]=X[&_j,1]*a&_i+X[&_j,2]*b1+X[&_j,3]*b2+X[&_j,4]*b3%str(;) ;
 		%end;
 	%end;
 %end;
 %if %upcase(&btype) = COMMON_QUAD %then %do;
 	%do _i = 1 %to &g; 
+  	    %local initetamnarr&_i;
   		%do _j = 1 %to &n; 
-		    %local initetamnarr&_j._&_i;
-	        %let initetamnarr&_j._&_i = etamnarr[%eval((&_i-1)*&n+&_j)] = X[&_j,1]*a&_i +X[&_j,2]*b1 +X[&_j,3]*b2 ;
+	        %let initetamnarr&_i = &&initetamnarr&_i etamnarr[%eval((&_i-1)*&n+&_j)]=X[&_j,1]*a&_i+X[&_j,2]*b1+X[&_j,3]*b2%str(;) ;
 		%end;
 	%end;
 %end;
 %if %upcase(&btype) = COMMON_LINEAR %then %do;
 	%do _i = 1 %to &g; 
+  	    %local initetamnarr&_i;
   		%do _j = 1 %to &n; 
-		    %local initetamnarr&_j._&_i;
-	        %let initetamnarr&_j._&_i = etamnarr[%eval((&_i-1)*&n+&_j)] = X[&_j,1]*a&_i +X[&_j,2]*b1 ;
+	        %let initetamnarr&_i = &&initetamnarr&_i etamnarr[%eval((&_i-1)*&n+&_j)]=X[&_j,1]*a&_i+X[&_j,2]*b1%str(;) ;
 		%end;
 	%end;
 %end;
 %if %upcase(&btype) = DROPPED %then %do;
 	%do _i = 1 %to &g; 
+  	    %local initetamnarr&_i;
   		%do _j = 1 %to &n; 
-		    %local initetamnarr&_j._&_i;
-	        %let initetamnarr&_j._&_i = etamnarr[%eval((&_i-1)*&n+&_j)] = X[&_j,1]*a&_i ;
+	        %let initetamnarr&_i = &&initetamnarr&_i etamnarr[%eval((&_i-1)*&n+&_j)]=X[&_j,1]*a&_i%str(;) ;
 		%end;
 	%end;
 %end;
@@ -4435,7 +4357,7 @@ run;
 %let initlinevarr = ; %let _i = 0;
 %if %upcase(&brndvars) = YES %then %do; 
 	%do _i = 1 %to &g;
-		%let initlinevarr = &initlinevarr varr&_i = 1/rand('gamma', &bvshape, 1/&bvscale) %str(;) ;
+		%let initlinevarr = &initlinevarr varr&_i=1/rand('gamma',&bvshape,1/&bvscale)%str(;) ;
 	%end;
 %end;
 
@@ -4474,42 +4396,35 @@ run;
 /*       The pseudo-parameters mbetag and Dbetag are also updated in those UDS subroutines */
 /*       Note that the sb1-sb3 are updated via the M-H sampler, which is applied before the UDS per SAS documentation */
 %if %upcase(&btype) = FULL_CUBIC %then
-	%let udsline = &udsline uds MP_bfc(mb1, mb2, mb3, mbetag, Dbetag, 
-										     b1arr, b2arr, b3arr, mb1hyp, mb2hyp, mb3hyp, sb1, sb2, sb3) %str(;) ;
+	%let udsline = &udsline uds MP_bfc(mb1, mb2, mb3, mbetag, Dbetag, b1arr, b2arr, b3arr, mb1hyp, mb2hyp, mb3hyp, sb1, sb2, sb3)%str(;) ;
 %if %upcase(&btype) = FULL_QUAD %then
-	%let udsline = &udsline uds MP_bfq(mb1, mb2, mbetag, Dbetag, b1arr, b2arr, mb1hyp, mb2hyp, sb1, sb2) %str(;) ;
+	%let udsline = &udsline uds MP_bfq(mb1, mb2, mbetag, Dbetag, b1arr, b2arr, mb1hyp, mb2hyp, sb1, sb2)%str(;) ;
 %if %upcase(&btype) = FULL_LINEAR %then
-	%let udsline = &udsline uds MP_bfl(mb1, mbetag, Dbetag, b1arr, mb1hyp, sb1) %str(;) ;
+	%let udsline = &udsline uds MP_bfl(mb1, mbetag, Dbetag, b1arr, mb1hyp, sb1)%str(;) ;
 
 /* eMKF: UDS statement for regression coefficients  */
 /*       The pseudo-parameter etamnarr is also updated in those subroutines to hold the updated regression predictions */
 %if %upcase(&btype) = DROPPED %then
-	%let udsline = &udsline uds CP_b0(a, etamnarr, mbetag, Dbetag, rhoarr, nuarr, rts, X, Yarr, Sarr) %str(;) ;
+	%let udsline = &udsline uds CP_b0(a, etamnarr, mbetag, Dbetag, rhoarr, nuarr, rts, X, Yarr, Sarr)%str(;) ;
 %if %upcase(&btype) = COMMON_LINEAR %then
-	%let udsline = &udsline uds CP_b1l(a, b1, etamnarr, 
-							  			ambetag, bmbetag, aDbetag, bDbetag, rhoarr, nuarr, rts, aX, bX, Yarr, Sarr) %str(;) ;
+	%let udsline = &udsline uds CP_b1l(a, b1, etamnarr, ambetag, bmbetag, aDbetag, bDbetag, rhoarr, nuarr, rts, aX, bX, Yarr, Sarr)%str(;) ;
 %if %upcase(&btype) = COMMON_QUAD %then 
-	%let udsline = &udsline uds CP_b1q(a, b1, b2, etamnarr,
-							  			ambetag, bmbetag, aDbetag, bDbetag, rhoarr, nuarr, rts, aX, bX, Yarr, Sarr) %str(;) ;
+	%let udsline = &udsline uds CP_b1q(a, b1, b2, etamnarr, ambetag, bmbetag, aDbetag, bDbetag, rhoarr, nuarr, rts, aX, bX, Yarr, Sarr)%str(;) ;
 %if %upcase(&btype) = COMMON_CUBIC %then
-	%let udsline = &udsline uds CP_b1c(a, b1, b2, b3, etamnarr,
-							  			ambetag, bmbetag, aDbetag, bDbetag, rhoarr, nuarr, rts, aX, bX, Yarr, Sarr) %str(;) ;
+	%let udsline = &udsline uds CP_b1c(a, b1, b2, b3, etamnarr, ambetag, bmbetag, aDbetag, bDbetag, rhoarr, nuarr, rts, aX, bX, Yarr, Sarr)%str(;) ;
 %if %upcase(&btype) = INDEP_LINEAR or %upcase(&btype) = FULL_LINEAR %then
-	%let udsline = &udsline uds CP_bgl(a, b1arr, etamnarr,
-							  			mbetag, Dbetag, rhoarr, nuarr, rts, X, Yarr, Sarr) %str(;) ;
+	%let udsline = &udsline uds CP_bgl(a, b1arr, etamnarr, mbetag, Dbetag, rhoarr, nuarr, rts, X, Yarr, Sarr)%str(;) ;
 %if %upcase(&btype) = INDEP_QUAD or %upcase(&btype) = FULL_QUAD %then
-	%let udsline = &udsline uds CP_bgq(a, b1arr, b2arr, etamnarr,
-							  			mbetag, Dbetag, rhoarr, nuarr, rts, X, Yarr, Sarr) %str(;) ;
+	%let udsline = &udsline uds CP_bgq(a, b1arr, b2arr, etamnarr, mbetag, Dbetag, rhoarr, nuarr, rts, X, Yarr, Sarr)%str(;) ;
 %if %upcase(&btype) = INDEP_CUBIC or %upcase(&btype) = FULL_CUBIC %then
-	%let udsline = &udsline uds CP_bgc(a, b1arr, b2arr, b3arr, etamnarr,
-							  			mbetag, Dbetag, rhoarr, nuarr, rts, X, Yarr, Sarr) %str(;) ;
+	%let udsline = &udsline uds CP_bgc(a, b1arr, b2arr, b3arr, etamnarr, mbetag, Dbetag, rhoarr, nuarr, rts, X, Yarr, Sarr)%str(;) ;
 
 /* eMKF: UDS statement for true states etaarr */
-%let udsline = &udsline uds EP(etaarr, etamnarr, rhoarr, nuarr, rts, Yarr, Sarr) %str(;) ;
+%let udsline = &udsline uds EP(etaarr, etamnarr, rhoarr, nuarr, rts, Yarr, Sarr)%str(;) ;
 
 /* eMKF: UDS statement for variances (if applicable) */
 %if %upcase(&brndvars) = YES %then 
-	%let udsline = &udsline uds RP(varr, vhyp, Sarr, Narr) %str(;) ;
+	%let udsline = &udsline uds RP(varr, vhyp, Sarr, Narr)%str(;) ;
 
 /* eMKF: library location for pre-compiled UDS subroutines */
 options cmplib = &bcmploc;
@@ -4542,7 +4457,7 @@ options cmplib = &bcmploc;
 
 /* eMKF: Monitor selected model parameters */
 %let monitorline = &sbparline &mbparline &parline etaarr &vparline;
-%if %upcase(&bARmodel) = INDEP_AR %then %let monitorline =  spsi mpsi &tausqparline &rhoparline &monitorline ;
+%if %upcase(&bARmodel) = INDEP_AR %then %let monitorline = spsi mpsi &tausqparline &rhoparline &monitorline ;
 %if %upcase(&bARmodel) = COMMON_AR %then %let monitorline = tausq rho &monitorline ;
 
 /* eMKF: Empty dataset to pass to proc mcmc: data from _bbdata_ will be read directly into arrays */
@@ -4550,7 +4465,7 @@ data _bb_;
 run;
 
 /* eMKF: Call proc mcmc using the above customizations  */
-%put Call to PROC MCMC initiated.;
+%put Call to PROC MCMC initiated; %let _i = 0;
 proc mcmc data=_bb_ outpost= &blog monitor = ( &monitorline ) &optionline;;	
 
 	  %if %upcase(&bprint) ^=YES and %upcase(&bplot) ^=YES 	/* Disable output tables and plots as applicable */
@@ -4709,11 +4624,8 @@ proc mcmc data=_bb_ outpost= &blog monitor = ( &monitorline ) &optionline;;
 		  &initlineb2;;										/* initialize quad coefficients (if applicable) */	
 		  &initlineb3;;										/* initialize cubic coefficients (if applicable) */
 
-		  %let _i = 0; %let _j = 0; 
           %do _i = 1 %to &g; 
-  	          %do _j = 1 %to &n; 
-		          &&initetamnarr&_j._&_i;;					/* initialize conditional mean for true states  */ 
-			  %end;
+		      &&initetamnarr&_i;;						    /* initialize conditional mean for true states  */ 
 		  %end;
 
 		  do k = 1 to &g; 			  						/* initialize etaarr using Markov property of AR process */
@@ -4856,7 +4768,7 @@ run;
 /* eMKF: Disable ODS graphics */
 %if %upcase(&bplot) = YES %then ods graphics off;;
 
-%put Call to PROC MCMC concluded.;
+%put Call to PROC MCMC concluded;
 
 /*eMKF: Keep only the desired columns in the posterior log dataset */
 %if %upcase(&bARmodel) = INDEP_AR %then %do;
@@ -5369,20 +5281,17 @@ run;
 /* eMKF: Array structures for BMA weights and prior mixtures */
 /* Recall: model 1=indep_cubic, 2=indep_quad, 3=indep_linear, 4=common_cubic, 5=common_quad, 6=common_linear, 7=dropped */
 %let wtsline = ; 
-%if %upcase(&btype) = BMA_CUBIC %then %do;		
-	%let wtsline = &wtsline array wtsshape[7] (&wshape &wshape 
-		   &wshape &wshape &wshape &wshape &wshape) %str(;) ; /*  constant shape parameters for Dirichlet */
-	%let wtsline = &wtsline array wts[7] %str(;); 			  /*  model weights */
+%if %upcase(&btype) = BMA_CUBIC %then %do;		  /*  constant shape parameters for Dirichlet */
+	%let wtsline = &wtsline array wtsshape[7] (&wshape &wshape &wshape &wshape &wshape &wshape &wshape)%str(;) ; 
+	%let wtsline = &wtsline array wts[7]%str(;);  /*  model weights */
 %end;
 %if %upcase(&btype) = BMA_QUAD %then %do;
-	%let wtsline = &wtsline array wtsshape[5] (&wshape &wshape 
-				           &wshape &wshape &wshape) %str(;) ; /*  constant shape parameters for Dirichlet */
-	%let wtsline = &wtsline array wts[5] %str(;); 			  /*  model weights */
+	%let wtsline = &wtsline array wtsshape[5] (&wshape &wshape &wshape &wshape &wshape)%str(;) ; 
+	%let wtsline = &wtsline array wts[5]%str(;);
 %end;
 %if %upcase(&btype) = BMA_LINEAR %then %do;
-	%let wtsline = &wtsline array wtsshape[3] (&wshape &wshape  
-										   &wshape) %str(;) ; /*  constant shape parameters for Dirichlet */
-	%let wtsline = &wtsline array wts[3] %str(;); 			  /*  model weights */
+	%let wtsline = &wtsline array wtsshape[3] (&wshape &wshape &wshape)%str(;) ;
+	%let wtsline = &wtsline array wts[3]%str(;); 
 %end;
 
 /* eMKF: Named 1-dimensional arrays of regression parameters other than intercept */
@@ -5402,7 +5311,7 @@ run;
 %do _i = 1 %to &g;
    %do _j = 1 %to &n; 
 		%let etamnarrline = &etamnarrline etamn&_j._&_i;
-		%let etaarrline   = &etaarrline   eta&_j._&_i;
+		%let etaarrline   = &etaarrline eta&_j._&_i;
    %end;
 %end;
 
@@ -5410,7 +5319,7 @@ run;
 %let vline=;
 %if %upcase(&brndvars) = YES %then %do;
 	%let vline = array varr[&g] varr1-varr&g ; 
-	%let vline = &vline %str(;) array vhyp[2] (&bvshape &bvscale) ; /* add array of hyperparameters to pass to UDS */
+	%let vline = &vline%str(;) array vhyp[2] (&bvshape &bvscale) ; /* add array of hyperparameters to pass to UDS */
 %end;
 
 /* eMKF: Dynamic array of effective sample sizes (if applicable) to use with read_array */
@@ -5422,7 +5331,7 @@ run;
 /*****************************************************************/
 
 /* eMKF: Slice sampler, if requested, would apply to parameters for which Gibbs sampling is not available */
-%let bslice = %str(;) ;
+%let bslice =%str(;) ;
 %if %upcase(&bslicesampler) = YES %then %let bslice = %str(/slice ;);
 
 /* eMKF: Group-specific AR parameters (if applicable) */
@@ -5432,10 +5341,10 @@ run;
   	%let psiparline2 = &psiparline2 parms mpsi &bslice;			/* mean hyperparameter for mean of psi */
 	%let _i = 0;
 	%do _i = 1 %to &g; 
-		%let psiparline   = &psiparline   psi&_i ; 
-		%let tauparline   = &tauparline   tau&_i ; 
-		%let tausqparline = &tausqparline tausq&_i ; 
-		%let rhoparline   = &rhoparline   rho&_i ; 
+		%let psiparline  = &psiparline psi&_i ; 
+		%let tauparline  = &tauparline tau&_i ; 
+		%let tausqparline= &tausqparline tausq&_i ; 
+		%let rhoparline  = &rhoparline rho&_i ; 
     	%let psiparline2 = &psiparline2 parms psi&_i &bslice;	/* Group-specific psi1 through psi&g  */
     	%let tauparline2 = &tauparline2 parms tau&_i &bslice;	/* Group-specific innovation SDs tau1 through tau&g */
 	%end; 
@@ -5535,98 +5444,98 @@ run;
 
 %if %upcase(&btype) = BMA_CUBIC %then %do;
 
-	%let plineb1 = &plineb1 lpb1 = 0 %str(;) ;
-	%let plineb1 = &plineb1 if flg = 4 or flg = 5 or flg = 6 then lpb1 = lpb1 + lpdfnorm(b1, &bmbeta1, sqrt(1/&bpbeta1)) %str(;) ;
-	%let plineb1 = &plineb1 if (flg = 1 or flg = 2 or flg = 3 or flg = 7) and %str(abs(b1 - mean(of b1arr1-b1arr&g)) > %sysevalf(1e-11)) then lpb1 = lpb1 - %sysevalf(1e15) %str(;) ;
-	%let plineb1 = &plineb1 prior b1 ~ general(lpb1) %str(;);
+	%let plineb1 = &plineb1 lpb1=0%str(;) ;
+	%let plineb1 = &plineb1 if flg=4 or flg=5 or flg=6 then lpb1=lpb1+lpdfnorm(b1,&bmbeta1,sqrt(1/&bpbeta1))%str(;) ;
+	%let plineb1 = &plineb1 if (flg=1 or flg=2 or flg=3 or flg=7) and %str(abs(b1-mean(of b1arr1-b1arr&g))>%sysevalf(1e-11)) then lpb1=lpb1-%sysevalf(1e15)%str(;) ;
+	%let plineb1 = &plineb1 prior b1 ~ general(lpb1)%str(;);
 
-	%let plineb1 = &plineb1 lpb1 = 0 %str(;) ;
+	%let plineb1 = &plineb1 lpb1=0%str(;) ;
 	%let _i = 0;
 	%do _i = 1 %to &g; 
-	    %let plineb1 = &plineb1 if flg = 1 or flg = 2 or flg = 3 then lpb1 = lpb1 + lpdfnorm(b1arr&_i, &bmbeta1, sqrt(1/&bpbeta1)) %str(;) ;
-		%let plineb1 = &plineb1 if flg = 7 and %str(abs(b1arr&_i) > %sysevalf(1e-11)) then lpb1 = lpb1 - %sysevalf(1e15) %str(;) ;
-		%let plineb1 = &plineb1 if (flg = 4 or flg = 5 or flg = 6) and %str(abs(b1 - b1arr&_i) > %sysevalf(1e-11)) then lpb1 = lpb1 - %sysevalf(1e15) %str(;) ;
+	    %let plineb1 = &plineb1 if flg=1 or flg=2 or flg=3 then lpb1=lpb1+lpdfnorm(b1arr&_i,&bmbeta1,sqrt(1/&bpbeta1))%str(;) ;
+		%let plineb1 = &plineb1 if flg=7 and %str(abs(b1arr&_i)>%sysevalf(1e-11)) then lpb1=lpb1-%sysevalf(1e15)%str(;) ;
+		%let plineb1 = &plineb1 if (flg=4 or flg=5 or flg=6) and %str(abs(b1-b1arr&_i)>%sysevalf(1e-11)) then lpb1=lpb1-%sysevalf(1e15)%str(;) ;
 	%end;
-	%let plineb1 = &plineb1 prior b1arr: ~ general(lpb1) %str(;);
+	%let plineb1 = &plineb1 prior b1arr: ~ general(lpb1)%str(;);
 
-	%let plineb2 = &plineb2 lpb2 = 0 %str(;) ;
-	%let plineb2 = &plineb2 if flg = 4 or flg = 5 then lpb2 = lpb2 + lpdfnorm(b2, &bmbeta2, sqrt(1/&bpbeta2)) %str(;) ;
-	%let plineb2 = &plineb2 if flg = 6 and %str(abs(b2) > %sysevalf(1e-11)) then lpb2 = lpb2 - %sysevalf(1e15) %str(;) ;
-	%let plineb2 = &plineb2 if (flg = 1 or flg = 2 or flg = 3 or flg = 7) and %str(abs(b2 - mean(of b2arr1-b2arr&g)) > %sysevalf(1e-11)) then lpb2 = lpb2 - %sysevalf(1e15) %str(;) ;
-	%let plineb2 = &plineb2 prior b2 ~ general(lpb2) %str(;);
+	%let plineb2 = &plineb2 lpb2=0%str(;) ;
+	%let plineb2 = &plineb2 if flg=4 or flg=5 then lpb2=lpb2+lpdfnorm(b2,&bmbeta2,sqrt(1/&bpbeta2))%str(;) ;
+	%let plineb2 = &plineb2 if flg=6 and %str(abs(b2)> %sysevalf(1e-11)) then lpb2=lpb2-%sysevalf(1e15)%str(;) ;
+	%let plineb2 = &plineb2 if (flg=1 or flg=2 or flg=3 or flg=7) and %str(abs(b2-mean(of b2arr1-b2arr&g))>%sysevalf(1e-11)) then lpb2=lpb2-%sysevalf(1e15)%str(;) ;
+	%let plineb2 = &plineb2 prior b2 ~ general(lpb2)%str(;);
 
-	%let plineb2 = &plineb2 lpb2 = 0 %str(;) ;
+	%let plineb2 = &plineb2 lpb2=0%str(;) ;
 	%let _i = 0;
 	%do _i = 1 %to &g; 
-	    %let plineb2 = &plineb2 if flg = 1 or flg = 2 then lpb2 = lpb2 + lpdfnorm(b2arr&_i, &bmbeta2, sqrt(1/&bpbeta2)) %str(;) ;
-		%let plineb2 = &plineb2 if (flg = 3 or flg = 7) and %str(abs(b2arr&_i) > %sysevalf(1e-11)) then lpb2 = lpb2 - %sysevalf(1e15) %str(;) ;
-		%let plineb2 = &plineb2 if (flg = 4 or flg = 5 or flg = 6) and %str(abs(b2 - b2arr&_i) > %sysevalf(1e-11)) then lpb2 = lpb2 - %sysevalf(1e15) %str(;) ;
+	    %let plineb2 = &plineb2 if flg=1 or flg=2 then lpb2=lpb2+lpdfnorm(b2arr&_i,&bmbeta2,sqrt(1/&bpbeta2))%str(;) ;
+		%let plineb2 = &plineb2 if (flg=3 or flg=7) and %str(abs(b2arr&_i)>%sysevalf(1e-11)) then lpb2=lpb2-%sysevalf(1e15)%str(;) ;
+		%let plineb2 = &plineb2 if (flg=4 or flg=5 or flg=6) and %str(abs(b2-b2arr&_i)>%sysevalf(1e-11)) then lpb2=lpb2-%sysevalf(1e15)%str(;) ;
 	%end;
-	%let plineb2 = &plineb2 prior b2arr: ~ general(lpb2) %str(;);
+	%let plineb2 = &plineb2 prior b2arr: ~ general(lpb2)%str(;);
 
-	%let plineb3 = &plineb3 lpb3 = 0 %str(;) ;
-	%let plineb3 = &plineb3 if flg = 4 then lpb3 = lpb3 + lpdfnorm(b3, &bmbeta3, sqrt(1/&bpbeta3)) %str(;) ;
-	%let plineb3 = &plineb3 if (flg = 5 or flg = 6) and %str(abs(b3) > %sysevalf(1e-11)) then lpb3 = lpb3 - %sysevalf(1e15) %str(;) ;
-	%let plineb3 = &plineb3 if (flg = 1 or flg = 2 or flg = 3 or flg = 7) and %str(abs(b3 - mean(of b3arr1-b3arr&g)) > %sysevalf(1e-11)) then lpb3 = lpb3 - %sysevalf(1e15) %str(;) ;
-	%let plineb3 = &plineb3 prior b3 ~ general(lpb3) %str(;);
+	%let plineb3 = &plineb3 lpb3=0%str(;) ;
+	%let plineb3 = &plineb3 if flg=4 then lpb3=lpb3+lpdfnorm(b3,&bmbeta3,sqrt(1/&bpbeta3))%str(;) ;
+	%let plineb3 = &plineb3 if (flg=5 or flg=6) and %str(abs(b3)>%sysevalf(1e-11)) then lpb3=lpb3-%sysevalf(1e15)%str(;) ;
+	%let plineb3 = &plineb3 if (flg=1 or flg=2 or flg=3 or flg=7) and %str(abs(b3-mean(of b3arr1-b3arr&g))>%sysevalf(1e-11)) then lpb3=lpb3-%sysevalf(1e15)%str(;) ;
+	%let plineb3 = &plineb3 prior b3 ~ general(lpb3)%str(;);
 
-	%let plineb3 = &plineb3 lpb3 = 0 %str(;) ;
+	%let plineb3 = &plineb3 lpb3=0%str(;) ;
 	%let _i = 0;
 	%do _i = 1 %to &g; 
-	    %let plineb3 = &plineb3 if flg = 1 then lpb3 = lpb3 + lpdfnorm(b3arr&_i, &bmbeta3, sqrt(1/&bpbeta3)) %str(;) ;
-		%let plineb3 = &plineb3 if (flg = 2 or flg = 3 or flg = 7) and %str(abs(b3arr&_i) > %sysevalf(1e-11)) then lpb3 = lpb3 - %sysevalf(1e15) %str(;) ;
-		%let plineb3 = &plineb3 if (flg = 4 or flg = 5 or flg = 6) and %str(abs(b3 - b3arr&_i) > %sysevalf(1e-11)) then lpb3 = lpb3 - %sysevalf(1e15) %str(;) ;
+	    %let plineb3 = &plineb3 if flg=1 then lpb3=lpb3+lpdfnorm(b3arr&_i,&bmbeta3,sqrt(1/&bpbeta3))%str(;) ;
+		%let plineb3 = &plineb3 if (flg=2 or flg=3 or flg=7) and %str(abs(b3arr&_i)>%sysevalf(1e-11)) then lpb3=lpb3-%sysevalf(1e15)%str(;) ;
+		%let plineb3 = &plineb3 if (flg=4 or flg=5 or flg=6) and %str(abs(b3-b3arr&_i)>%sysevalf(1e-11)) then lpb3=lpb3-%sysevalf(1e15)%str(;) ;
 	%end;
-	%let plineb3 = &plineb3 prior b3arr: ~ general(lpb3) %str(;);
+	%let plineb3 = &plineb3 prior b3arr: ~ general(lpb3)%str(;);
 
 %end;
 %if %upcase(&btype) = BMA_QUAD %then %do;
 
-	%let plineb1 = &plineb1 lpb1 = 0 %str(;) ;
-	%let plineb1 = &plineb1 if flg = 3 or flg = 4 then lpb1 = lpb1 + lpdfnorm(b1, &bmbeta1, sqrt(1/&bpbeta1)) %str(;) ;
-	%let plineb1 = &plineb1 if (flg = 1 or flg = 2 or flg = 5) and %str(abs(b1 - mean(of b1arr1-b1arr&g)) > %sysevalf(1e-11)) then lpb1 = lpb1 - %sysevalf(1e15) %str(;) ;
-	%let plineb1 = &plineb1 prior b1 ~ general(lpb1) %str(;);
+	%let plineb1 = &plineb1 lpb1=0%str(;) ;
+	%let plineb1 = &plineb1 if flg=3 or flg=4 then lpb1=lpb1+lpdfnorm(b1,&bmbeta1,sqrt(1/&bpbeta1))%str(;) ;
+	%let plineb1 = &plineb1 if (flg=1 or flg=2 or flg=5) and %str(abs(b1-mean(of b1arr1-b1arr&g))>%sysevalf(1e-11)) then lpb1=lpb1-%sysevalf(1e15)%str(;) ;
+	%let plineb1 = &plineb1 prior b1 ~ general(lpb1)%str(;);
 
-	%let plineb1 = &plineb1 lpb1 = 0 %str(;) ;
+	%let plineb1 = &plineb1 lpb1=0%str(;) ;
 	%let _i = 0;
 	%do _i = 1 %to &g; 
-	    %let plineb1 = &plineb1 if flg = 1 or flg = 2 then lpb1 = lpb1 + lpdfnorm(b1arr&_i, &bmbeta1, sqrt(1/&bpbeta1)) %str(;) ;
-		%let plineb1 = &plineb1 if flg = 5 and %str(abs(b1arr&_i) > %sysevalf(1e-11)) then lpb1 = lpb1 - %sysevalf(1e15) %str(;) ;
-		%let plineb1 = &plineb1 if (flg = 3 or flg = 4) and %str(abs(b1 - b1arr&_i) > %sysevalf(1e-11)) then lpb1 = lpb1 - %sysevalf(1e15) %str(;) ;
+	    %let plineb1 = &plineb1 if flg=1 or flg=2 then lpb1=lpb1+lpdfnorm(b1arr&_i,&bmbeta1,sqrt(1/&bpbeta1))%str(;) ;
+		%let plineb1 = &plineb1 if flg=5 and %str(abs(b1arr&_i)>%sysevalf(1e-11)) then lpb1=lpb1-%sysevalf(1e15)%str(;) ;
+		%let plineb1 = &plineb1 if (flg=3 or flg=4) and %str(abs(b1-b1arr&_i)>%sysevalf(1e-11)) then lpb1=lpb1-%sysevalf(1e15)%str(;) ;
 	%end;
-	%let plineb1 = &plineb1 prior b1arr: ~ general(lpb1) %str(;);
+	%let plineb1 = &plineb1 prior b1arr: ~ general(lpb1)%str(;);
 
-	%let plineb2 = &plineb2 lpb2 = 0 %str(;) ;
-	%let plineb2 = &plineb2 if flg = 3 then lpb2 = lpb2 + lpdfnorm(b2, &bmbeta2, sqrt(1/&bpbeta2)) %str(;) ;
-	%let plineb2 = &plineb2 if flg = 4 and %str(abs(b2) > %sysevalf(1e-11)) then lpb2 = lpb2 - %sysevalf(1e15) %str(;) ;
-	%let plineb2 = &plineb2 if (flg = 1 or flg = 2 or flg = 5) and %str(abs(b2 - mean(of b2arr1-b2arr&g)) > %sysevalf(1e-11)) then lpb2 = lpb2 - %sysevalf(1e15) %str(;) ;
-	%let plineb2 = &plineb2 prior b2 ~ general(lpb2) %str(;);
+	%let plineb2 = &plineb2 lpb2=0%str(;) ;
+	%let plineb2 = &plineb2 if flg=3 then lpb2=lpb2+lpdfnorm(b2,&bmbeta2,sqrt(1/&bpbeta2))%str(;) ;
+	%let plineb2 = &plineb2 if flg=4 and %str(abs(b2)>%sysevalf(1e-11)) then lpb2=lpb2-%sysevalf(1e15)%str(;) ;
+	%let plineb2 = &plineb2 if (flg=1 or flg=2 or flg=5) and %str(abs(b2-mean(of b2arr1-b2arr&g))>%sysevalf(1e-11)) then lpb2=lpb2-%sysevalf(1e15)%str(;) ;
+	%let plineb2 = &plineb2 prior b2 ~ general(lpb2)%str(;);
 
-	%let plineb2 = &plineb2 lpb2 = 0 %str(;) ;
+	%let plineb2 = &plineb2 lpb2=0%str(;) ;
 	%let _i = 0;
 	%do _i = 1 %to &g; 
-	    %let plineb2 = &plineb2 if flg = 1 then lpb2 = lpb2 + lpdfnorm(b2arr&_i, &bmbeta2, sqrt(1/&bpbeta2)) %str(;) ;
-		%let plineb2 = &plineb2 if (flg = 2 or flg = 5) and %str(abs(b2arr&_i) > %sysevalf(1e-11)) then lpb2 = lpb2 - %sysevalf(1e15) %str(;) ;
-		%let plineb2 = &plineb2 if (flg = 3 or flg = 4) and %str(abs(b2 - b2arr&_i) > %sysevalf(1e-11)) then lpb2 = lpb2 - %sysevalf(1e15) %str(;) ;
+	    %let plineb2 = &plineb2 if flg=1 then lpb2=lpb2+lpdfnorm(b2arr&_i,&bmbeta2,sqrt(1/&bpbeta2))%str(;) ;
+		%let plineb2 = &plineb2 if (flg=2 or flg=5) and %str(abs(b2arr&_i)>%sysevalf(1e-11)) then lpb2=lpb2-%sysevalf(1e15)%str(;) ;
+		%let plineb2 = &plineb2 if (flg=3 or flg=4) and %str(abs(b2-b2arr&_i)>%sysevalf(1e-11)) then lpb2=lpb2-%sysevalf(1e15)%str(;) ;
 	%end;
-	%let plineb2 = &plineb2 prior b2arr: ~ general(lpb2) %str(;);
+	%let plineb2 = &plineb2 prior b2arr: ~ general(lpb2)%str(;);
 
 %end;
 %if %upcase(&btype) = BMA_LINEAR %then %do;
 
-	%let plineb1 = &plineb1 lpb1 = 0 %str(;) ;
-	%let plineb1 = &plineb1 if flg = 2 then lpb1 = lpb1 + lpdfnorm(b1, &bmbeta1, sqrt(1/&bpbeta1)) %str(;) ;
-	%let plineb1 = &plineb1 if (flg = 1 or flg = 3) and %str(abs(b1 - mean(of b1arr1-b1arr&g)) > %sysevalf(1e-11)) then lpb1 = lpb1 - %sysevalf(1e15) %str(;) ;
-	%let plineb1 = &plineb1 prior b1 ~ general(lpb1) %str(;);
+	%let plineb1 = &plineb1 lpb1=0%str(;) ;
+	%let plineb1 = &plineb1 if flg=2 then lpb1=lpb1+lpdfnorm(b1,&bmbeta1,sqrt(1/&bpbeta1))%str(;) ;
+	%let plineb1 = &plineb1 if (flg=1 or flg=3) and %str(abs(b1-mean(of b1arr1-b1arr&g))>%sysevalf(1e-11)) then lpb1=lpb1-%sysevalf(1e15)%str(;) ;
+	%let plineb1 = &plineb1 prior b1 ~ general(lpb1)%str(;);
 
-	%let plineb1 = &plineb1 lpb1 = 0 %str(;) ;
+	%let plineb1 = &plineb1 lpb1=0%str(;) ;
 	%let _i = 0;
 	%do _i = 1 %to &g; 
-	    %let plineb1 = &plineb1 if flg = 1 then lpb1 = lpb1 + lpdfnorm(b1arr&_i, &bmbeta1, sqrt(1/&bpbeta1)) %str(;) ;
-		%let plineb1 = &plineb1 if flg = 3 and %str(abs(b1arr&_i) > %sysevalf(1e-11)) then lpb1 = lpb1 - %sysevalf(1e15) %str(;) ;
-		%let plineb1 = &plineb1 if flg = 2 and %str(abs(b1 - b1arr&_i) > %sysevalf(1e-11)) then lpb1 = lpb1 - %sysevalf(1e15) %str(;) ;
+	    %let plineb1 = &plineb1 if flg=1 then lpb1=lpb1+lpdfnorm(b1arr&_i,&bmbeta1,sqrt(1/&bpbeta1))%str(;) ;
+		%let plineb1 = &plineb1 if flg=3 and %str(abs(b1arr&_i)>%sysevalf(1e-11)) then lpb1=lpb1-%sysevalf(1e15)%str(;) ;
+		%let plineb1 = &plineb1 if flg=2 and %str(abs(b1-b1arr&_i)>%sysevalf(1e-11)) then lpb1=lpb1-%sysevalf(1e15)%str(;) ;
 	%end;
-	%let plineb1 = &plineb1 prior b1arr: ~ general(lpb1) %str(;);
+	%let plineb1 = &plineb1 prior b1arr: ~ general(lpb1)%str(;);
 
 %end;
 
@@ -5645,11 +5554,11 @@ run;
 	%let initlinetau = tau = rand('uniform', &btaul, &btauu); 
 %end;
 %if %upcase(&bARmodel) = INDEP_AR %then %do; /* Group-specific AR parameters */
-    %let initlinepsi = &initlinepsi spsi = rand('uniform', 0.0001, sqrt(1/&bprho)) %str(;) ;		
-    %let initlinepsi = &initlinepsi mpsi = &bmrho + sqrt(1/&bprho)*rand('normal') %str(;) ;
+    %let initlinepsi = &initlinepsi spsi = rand('uniform', 0.0001, sqrt(1/&bprho))%str(;) ;		
+    %let initlinepsi = &initlinepsi mpsi = &bmrho + sqrt(1/&bprho)*rand('normal')%str(;) ;
 	%do _i = 1 %to &g;
-		%let initlinepsi = &initlinepsi psi&_i = mpsi + spsi*rand('normal') %str(;) ;
-		%let initlinetau = &initlinetau tau&_i = rand('uniform', &btaul, &btauu) %str(;) ;
+		%let initlinepsi = &initlinepsi psi&_i=mpsi+spsi*rand('normal')%str(;) ;
+		%let initlinetau = &initlinetau tau&_i=rand('uniform',&btaul,&btauu)%str(;) ;
 	%end;	
 %end;
 
@@ -5661,18 +5570,18 @@ run;
 %let _ll = %eval(0+&_ll);
 
 /* eMKF: Initial values for mixture weights */
-%let initlinewts = wtssum = 0 %str(;) ;
+%let initlinewts = wtssum = 0%str(;) ;
 %let _l=0; 
 %do _l=1 %to &_ll; 
-	/*%let initlinewts = &initlinewts wts[&_l] = rand('gamma', wtsshape[&_l]) %str(;) ; */
-	%let initlinewts = &initlinewts wts[&_l] = wtsshape[&_l] %str(;) ; 
-	%let initlinewts = &initlinewts wtssum = wtssum + wts[&_l] %str(;) ;
+	/*%let initlinewts = &initlinewts wts[&_l] = rand('gamma', wtsshape[&_l])%str(;) ; */
+	%let initlinewts = &initlinewts wts[&_l] = wtsshape[&_l]%str(;) ; 
+	%let initlinewts = &initlinewts wtssum = wtssum + wts[&_l]%str(;) ;
 %end;
 
 /* eMKF: Rescale wts to sum to one */
 %let _l=0;
 %do _l=1 %to &_ll;		
-	%let initlinewts = &initlinewts wts[&_l] = wts[&_l]/wtssum %str(;) ;
+	%let initlinewts = &initlinewts wts[&_l] = wts[&_l]/wtssum%str(;) ;
 %end;
 
 /* eMKF: Initial values for latent variable flg */
@@ -5684,24 +5593,24 @@ run;
 
 /* eMKF: Initial/constant values for prior mean vector mbetag and precision matrix Dbetag for use with matrix operations */
 %let initmbeta = call zeromatrix(Dbetag);	
-%let initmbeta = &initmbeta %str(;) mbetag[1,1] = &bmalpha %str(;) Dbetag[1,1] = &bpalpha;
+%let initmbeta = &initmbeta%str(;) mbetag[1,1] = &bmalpha%str(;) Dbetag[1,1] = &bpalpha;
 %if %upcase(&btype) = BMA_CUBIC %then %do;
-	%let initmbeta = &initmbeta %str(;) mbetag[2,1] = &bmbeta1 %str(;) Dbetag[2,2] = &bpbeta1;
-	%let initmbeta = &initmbeta %str(;) mbetag[3,1] = &bmbeta2 %str(;) Dbetag[3,3] = &bpbeta2;
-	%let initmbeta = &initmbeta %str(;) mbetag[4,1] = &bmbeta3 %str(;) Dbetag[4,4] = &bpbeta3;
+	%let initmbeta = &initmbeta%str(;) mbetag[2,1] = &bmbeta1%str(;) Dbetag[2,2] = &bpbeta1;
+	%let initmbeta = &initmbeta%str(;) mbetag[3,1] = &bmbeta2%str(;) Dbetag[3,3] = &bpbeta2;
+	%let initmbeta = &initmbeta%str(;) mbetag[4,1] = &bmbeta3%str(;) Dbetag[4,4] = &bpbeta3;
 %end;
 %if %upcase(&btype) = BMA_QUAD %then %do;
-	%let initmbeta = &initmbeta %str(;) mbetag[2,1] = &bmbeta1 %str(;) Dbetag[2,2] = &bpbeta1;
-	%let initmbeta = &initmbeta %str(;) mbetag[3,1] = &bmbeta2 %str(;) Dbetag[3,3] = &bpbeta2;
+	%let initmbeta = &initmbeta%str(;) mbetag[2,1] = &bmbeta1%str(;) Dbetag[2,2] = &bpbeta1;
+	%let initmbeta = &initmbeta%str(;) mbetag[3,1] = &bmbeta2%str(;) Dbetag[3,3] = &bpbeta2;
 %end;
 %if %upcase(&btype) = BMA_LINEAR %then %do;
-	%let initmbeta = &initmbeta %str(;) mbetag[2,1] = &bmbeta1 %str(;) Dbetag[2,2] = &bpbeta1;
+	%let initmbeta = &initmbeta%str(;) mbetag[2,1] = &bmbeta1%str(;) Dbetag[2,2] = &bpbeta1;
 %end;
 
 /* eMKF: Initial values for intercepts */
 %let initlinea=; %let _i=0;
 %do _i = 1 %to &g; 
-	%let initlinea = &initlinea a&_i = &bmalpha + sqrt(1/&bpalpha)*rand('normal') %str(;) ;
+	%let initlinea = &initlinea a&_i = &bmalpha + sqrt(1/&bpalpha)*rand('normal')%str(;) ;
 %end;
 
 /*********************************************************************************/
@@ -5712,68 +5621,68 @@ run;
 
 %if %upcase(&btype) = BMA_CUBIC %then %do;
 
-	%let initlineb3 = &initlineb3 if flg = 4 then b3 = &bmbeta3 + sqrt(1/&bpbeta3)*rand('normal') %str(;) ;
-	%let initlineb3 = &initlineb3 if flg = 5 or flg = 6 then b3 = 0 %str(;) ;
+	%let initlineb3 = &initlineb3 if flg=4 then b3=&bmbeta3+sqrt(1/&bpbeta3)*rand('normal')%str(;) ;
+	%let initlineb3 = &initlineb3 if flg=5 or flg=6 then b3=0%str(;) ;
 	%let _i = 0;
 	%do _i = 1 %to &g; 
-		%let initlineb3 = &initlineb3 if flg = 1 then b3arr&_i = &bmbeta3 + sqrt(1/&bpbeta3)*rand('normal') %str(;) ;
-		%let initlineb3 = &initlineb3 if flg = 2 or flg = 3 or flg = 7 then b3arr&_i = 0 %str(;) ;
-		%let initlineb3 = &initlineb3 if flg = 4 or flg = 5 or flg = 6 then b3arr&_i = b3 %str(;) ;
+		%let initlineb3 = &initlineb3 if flg=1 then b3arr&_i=&bmbeta3+sqrt(1/&bpbeta3)*rand('normal')%str(;) ;
+		%let initlineb3 = &initlineb3 if flg=2 or flg=3 or flg=7 then b3arr&_i=0%str(;) ;
+		%let initlineb3 = &initlineb3 if flg=4 or flg=5 or flg=6 then b3arr&_i=b3%str(;) ;
 	%end;
-	%let initlineb3 = &initlineb3 %str(if flg = 1 or flg = 2 or flg = 3 or flg = 7 then b3 = mean(of b3arr1-b3arr&g);) ;
+	%let initlineb3 = &initlineb3 %str(if flg=1 or flg=2 or flg=3 or flg=7 then b3=mean(of b3arr1-b3arr&g);) ;
 
-	%let initlineb2 = &initlineb2 if flg = 4 or flg = 5 then b2 = &bmbeta2 + sqrt(1/&bpbeta2)*rand('normal') %str(;) ;
-	%let initlineb2 = &initlineb2 if flg = 6 then b2 = 0 %str(;) ;
+	%let initlineb2 = &initlineb2 if flg=4 or flg=5 then b2=&bmbeta2+sqrt(1/&bpbeta2)*rand('normal')%str(;) ;
+	%let initlineb2 = &initlineb2 if flg=6 then b2=0%str(;) ;
 	%let _i = 0;
 	%do _i = 1 %to &g; 
-		%let initlineb2 = &initlineb2 if flg = 1 or flg = 2 then b2arr&_i = &bmbeta2 + sqrt(1/&bpbeta2)*rand('normal') %str(;) ;
-		%let initlineb2 = &initlineb2 if flg = 3 or flg = 7 then b2arr&_i = 0 %str(;) ;
-		%let initlineb2 = &initlineb2 if flg = 4 or flg = 5 or flg = 6 then b2arr&_i = b2 %str(;) ;
+		%let initlineb2 = &initlineb2 if flg=1 or flg=2 then b2arr&_i=&bmbeta2+sqrt(1/&bpbeta2)*rand('normal')%str(;) ;
+		%let initlineb2 = &initlineb2 if flg=3 or flg=7 then b2arr&_i=0%str(;) ;
+		%let initlineb2 = &initlineb2 if flg=4 or flg=5 or flg=6 then b2arr&_i=b2%str(;) ;
 	%end;
-	%let initlineb2 = &initlineb2 %str(if flg = 1 or flg = 2 or flg = 3 or flg = 7 then b2 = mean(of b2arr1-b2arr&g);) ;
+	%let initlineb2 = &initlineb2 %str(if flg=1 or flg=2 or flg=3 or flg=7 then b2= mean(of b2arr1-b2arr&g);) ;
 
-	%let initlineb1 = &initlineb1 if flg = 4 or flg = 5 or flg = 6 then b1 = &bmbeta1 + sqrt(1/&bpbeta1)*rand('normal') %str(;) ;
+	%let initlineb1 = &initlineb1 if flg=4 or flg=5 or flg=6 then b1=&bmbeta1+sqrt(1/&bpbeta1)*rand('normal')%str(;) ;
 	%let _i = 0;
 	%do _i = 1 %to &g; 
-		%let initlineb1 = &initlineb1 if flg = 1 or flg = 2 or flg = 3 then b1arr&_i = &bmbeta1 + sqrt(1/&bpbeta1)*rand('normal') %str(;) ;
-		%let initlineb1 = &initlineb1 if flg = 7 then b1arr&_i = 0 %str(;) ;
-		%let initlineb1 = &initlineb1 if flg = 4 or flg = 5 or flg = 6 then b1arr&_i = b1 %str(;) ;
+		%let initlineb1 = &initlineb1 if flg=1 or flg=2 or flg=3 then b1arr&_i=&bmbeta1+sqrt(1/&bpbeta1)*rand('normal')%str(;) ;
+		%let initlineb1 = &initlineb1 if flg=7 then b1arr&_i=0%str(;) ;
+		%let initlineb1 = &initlineb1 if flg=4 or flg=5 or flg=6 then b1arr&_i=b1%str(;) ;
 	%end;
-	%let initlineb1 = &initlineb1 %str(if flg = 1 or flg = 2 or flg = 3 or flg = 7 then b1 = mean(of b1arr1-b1arr&g);) ;
+	%let initlineb1 = &initlineb1 %str(if flg=1 or flg=2 or flg=3 or flg=7 then b1=mean(of b1arr1-b1arr&g);) ;
 
 %end;
 %if %upcase(&btype) = BMA_QUAD %then %do;
 
-	%let initlineb2 = &initlineb2 if flg = 3 then b2 = &bmbeta2 + sqrt(1/&bpbeta2)*rand('normal') %str(;) ;
-	%let initlineb2 = &initlineb2 if flg = 4 then b2 = 0 %str(;) ;
+	%let initlineb2 = &initlineb2 if flg=3 then b2=&bmbeta2+sqrt(1/&bpbeta2)*rand('normal')%str(;) ;
+	%let initlineb2 = &initlineb2 if flg=4 then b2=0%str(;) ;
 	%let _i = 0;
 	%do _i = 1 %to &g; 
-		%let initlineb2 = &initlineb2 if flg = 1 then b2arr&_i = &bmbeta2 + sqrt(1/&bpbeta2)*rand('normal') %str(;) ;
-		%let initlineb2 = &initlineb2 if flg = 2 or flg = 5 then b2arr&_i = 0 %str(;) ;
-		%let initlineb2 = &initlineb2 if flg = 3 or flg = 4 then b2arr&_i = b2 %str(;) ;
+		%let initlineb2 = &initlineb2 if flg=1 then b2arr&_i=&bmbeta2+sqrt(1/&bpbeta2)*rand('normal')%str(;) ;
+		%let initlineb2 = &initlineb2 if flg=2 or flg=5 then b2arr&_i=0%str(;) ;
+		%let initlineb2 = &initlineb2 if flg=3 or flg=4 then b2arr&_i=b2%str(;) ;
 	%end;
-	%let initlineb2 = &initlineb2 %str(if flg = 1 or flg = 2 or flg = 5 then b2 = mean(of b2arr1-b2arr&g);) ;
+	%let initlineb2 = &initlineb2 %str(if flg=1 or flg=2 or flg=5 then b2=mean(of b2arr1-b2arr&g);) ;
 
-	%let initlineb1 = &initlineb1 if flg = 3 or flg = 4 then b1 = &bmbeta1 + sqrt(1/&bpbeta1)*rand('normal') %str(;) ;
+	%let initlineb1 = &initlineb1 if flg=3 or flg=4 then b1=&bmbeta1+sqrt(1/&bpbeta1)*rand('normal')%str(;) ;
 	%let _i = 0;
 	%do _i = 1 %to &g; 
-		%let initlineb1 = &initlineb1 if flg = 1 or flg = 2  then b1arr&_i = &bmbeta1 + sqrt(1/&bpbeta1)*rand('normal') %str(;) ;
-		%let initlineb1 = &initlineb1 if flg = 5 then b1arr&_i = 0 %str(;) ;
-		%let initlineb1 = &initlineb1 if flg = 3 or flg = 4 then b1arr&_i = b1 %str(;) ;
+		%let initlineb1 = &initlineb1 if flg=1 or flg=2  then b1arr&_i=&bmbeta1+sqrt(1/&bpbeta1)*rand('normal')%str(;) ;
+		%let initlineb1 = &initlineb1 if flg=5 then b1arr&_i=0%str(;) ;
+		%let initlineb1 = &initlineb1 if flg=3 or flg=4 then b1arr&_i=b1%str(;) ;
 	%end;
-	%let initlineb1 = &initlineb1 %str(if flg = 1 or flg = 2 or flg = 5 then b1 = mean(of b1arr1-b1arr&g);) ;
+	%let initlineb1 = &initlineb1 %str(if flg=1 or flg=2 or flg=5 then b1=mean(of b1arr1-b1arr&g);) ;
 
 %end;
 %if %upcase(&btype) = BMA_LINEAR %then %do;
 
-	%let initlineb1 = &initlineb1 if flg = 2 then b1 = &bmbeta1 + sqrt(1/&bpbeta1)*rand('normal') %str(;) ;
+	%let initlineb1 = &initlineb1 if flg=2 then b1=&bmbeta1+sqrt(1/&bpbeta1)*rand('normal')%str(;) ;
 	%let _i = 0;
 	%do _i = 1 %to &g; 
-		%let initlineb1 = &initlineb1 if flg = 1 then b1arr&_i = &bmbeta1 + sqrt(1/&bpbeta1)*rand('normal') %str(;) ;
-		%let initlineb1 = &initlineb1 if flg = 3 then b1arr&_i = 0 %str(;) ;
-		%let initlineb1 = &initlineb1 if flg = 2 then b1arr&_i = b1 %str(;) ;
+		%let initlineb1 = &initlineb1 if flg=1 then b1arr&_i=&bmbeta1+sqrt(1/&bpbeta1)*rand('normal')%str(;) ;
+		%let initlineb1 = &initlineb1 if flg=3 then b1arr&_i=0%str(;) ;
+		%let initlineb1 = &initlineb1 if flg=2 then b1arr&_i=b1%str(;) ;
 	%end;
-	%let initlineb1 = &initlineb1 %str(if flg = 1 or flg = 3 then b1 = mean(of b1arr1-b1arr&g);) ;
+	%let initlineb1 = &initlineb1 %str(if flg=1 or flg=3 then b1=mean(of b1arr1-b1arr&g);) ;
 
 %end;
 
@@ -5781,25 +5690,25 @@ run;
 %let _i = 0; %let _j = 0; 
 %if %upcase(&btype) = BMA_CUBIC %then %do;
   %do _i = 1 %to &g; 
+  	%local initetamnarr&_i; /*eMKF: broken up into one macro variable per group instead of single combined macro variable to avoid max length error (65534) */
   	%do _j = 1 %to &n; 
-	  %local initetamnarr&_j._&_i; /*eMKF: broken up into many macro variables instead of single one to avoid max length error (65534) */
-	  %let initetamnarr&_j._&_i = etamnarr[%eval((&_i-1)*&n+&_j)] = X[&_j,1]*a&_i +X[&_j,2]*b1arr&_i +X[&_j,3]*b2arr&_i +X[&_j,4]*b3arr&_i ;
+	  %let initetamnarr&_i = &&initetamnarr&_i etamnarr[%eval((&_i-1)*&n+&_j)]=X[&_j,1]*a&_i+X[&_j,2]*b1arr&_i+X[&_j,3]*b2arr&_i+X[&_j,4]*b3arr&_i%str(;) ;
     %end;
   %end;
 %end;
 %if %upcase(&btype) = BMA_QUAD %then %do;
 	%do _i = 1 %to &g; 
+	    %local initetamnarr&_i;
   		%do _j = 1 %to &n; 
-			%local initetamnarr&_j._&_i;
-	  		%let initetamnarr&_j._&_i = etamnarr[%eval((&_i-1)*&n + &_j)] = X[&_j,1]*a&_i + X[&_j,1]*b1arr&_i + X[&_j,2]*b2arr&_i ;
+	  		%let initetamnarr&_i = &&initetamnarr&_i etamnarr[%eval((&_i-1)*&n+&_j)]=X[&_j,1]*a&_i+X[&_j,1]*b1arr&_i+X[&_j,2]*b2arr&_i%str(;) ;
 		%end;
 	%end;
 %end;
 %if %upcase(&btype) = BMA_LINEAR %then %do;
 	%do _i = 1 %to &g; 
+	    %local initetamnarr&_i;
   		%do _j = 1 %to &n; 
-		    %local initetamnarr&_j._&_i;
-			%let initetamnarr&_j._&_i = etamnarr[%eval((&_i-1)*&n + &_j)] = X[&_j,1]*a&_i + X[&_j,2]*b1arr&_i ;
+			%let initetamnarr&_i = &&initetamnarr&_i etamnarr[%eval((&_i-1)*&n+&_j)]=X[&_j,1]*a&_i+X[&_j,2]*b1arr&_i%str(;) ;
 		%end;
 	%end;
 %end;
@@ -5809,7 +5718,7 @@ run;
 %if %upcase(&brndvars) = YES %then %do; 
 	%let _i = 0;
 	%do _i = 1 %to &g;
-		%let initlinevarr = &initlinevarr varr&_i = 1/rand('gamma', &bvshape, 1/&bvscale) %str(;) ;
+		%let initlinevarr = &initlinevarr varr&_i=1/rand('gamma',&bvshape,1/&bvscale)%str(;) ;
 	%end;
 %end;
 
@@ -5844,30 +5753,27 @@ run;
  
 /*eMKF: UDS statement for model flag */
 %if %upcase(&btype) = BMA_CUBIC %then
-	%let udsline = &udsline uds FP_bmac(flg, wts, a, mbetag, Dbetag, rhoarr, nuarr, rts, X, Yarr, Sarr) %str(;) ;
+	%let udsline = &udsline uds FP_bmac(flg, wts, a, mbetag, Dbetag, rhoarr, nuarr, rts, X, Yarr, Sarr)%str(;) ;
 %if %upcase(&btype) = BMA_QUAD %then
-	%let udsline = &udsline uds FP_bmaq(flg, wts, a, mbetag, Dbetag, rhoarr, nuarr, rts, X, Yarr, Sarr) %str(;) ;
+	%let udsline = &udsline uds FP_bmaq(flg, wts, a, mbetag, Dbetag, rhoarr, nuarr, rts, X, Yarr, Sarr)%str(;) ;
 %if %upcase(&btype) = BMA_LINEAR %then
-	%let udsline = &udsline uds FP_bmal(flg, wts, a, mbetag, Dbetag, rhoarr, nuarr, rts, X, Yarr, Sarr) %str(;) ;
+	%let udsline = &udsline uds FP_bmal(flg, wts, a, mbetag, Dbetag, rhoarr, nuarr, rts, X, Yarr, Sarr)%str(;) ;
 
 /*eMKF: UDS statement for regression coefficients  */
 /*      The pseudo-parameter etamnarr is also updated in those subroutines to hold the updated regression predictions */
 %if %upcase(&btype) = BMA_CUBIC %then
-	%let udsline = &udsline uds CP_bmac(a, b1arr, b2arr, b3arr, b1, b2, b3, etamnarr,
-							   			mbetag, Dbetag, rhoarr, nuarr, rts, X, Yarr, Sarr, flg) %str(;) ;
+	%let udsline = &udsline uds CP_bmac(a, b1arr, b2arr, b3arr, b1, b2, b3, etamnarr, mbetag, Dbetag, rhoarr, nuarr, rts, X, Yarr, Sarr, flg)%str(;) ;
 %if %upcase(&btype) = BMA_QUAD %then
-	%let udsline = &udsline uds CP_bmaq(a, b1arr, b2arr, b1, b2, etamnarr,
-							   			mbetag, Dbetag, rhoarr, nuarr, rts, X, Yarr, Sarr, flg) %str(;) ;
+	%let udsline = &udsline uds CP_bmaq(a, b1arr, b2arr, b1, b2, etamnarr, mbetag, Dbetag, rhoarr, nuarr, rts, X, Yarr, Sarr, flg)%str(;) ;
 %if %upcase(&btype) = BMA_LINEAR %then
-	%let udsline = &udsline uds CP_bmal(a, b1arr, b1, etamnarr,
-							   			mbetag, Dbetag, rhoarr, nuarr, rts, X, Yarr, Sarr, flg) %str(;) ;
+	%let udsline = &udsline uds CP_bmal(a, b1arr, b1, etamnarr, mbetag, Dbetag, rhoarr, nuarr, rts, X, Yarr, Sarr, flg)%str(;) ;
 
 /*eMKF: UDS statement for true states etaarr */
-%let udsline = &udsline uds EP(etaarr, etamnarr, rhoarr, nuarr, rts, Yarr, Sarr) %str(;) ;
+%let udsline = &udsline uds EP(etaarr, etamnarr, rhoarr, nuarr, rts, Yarr, Sarr)%str(;) ;
 
 /*eMKF: UDS statement for variances (if applicable) */
 %if %upcase(&brndvars) = YES %then 
-	%let udsline = &udsline uds RP(varr, vhyp, Sarr, Narr) %str(;) ;
+	%let udsline = &udsline uds RP(varr, vhyp, Sarr, Narr)%str(;) ;
 
 /* eMKF: library location for pre-compiled UDS subroutines */
 options cmplib = &bcmploc;
@@ -5908,7 +5814,7 @@ data _bb_;
 run;
 
 /* eMKF: Call proc mcmc using the above customizations  */
-%put Call to PROC MCMC initiated.;
+%put Call to PROC MCMC initiated; %let _i = 0;
 proc mcmc data=_bb_ outpost= &blog monitor = ( &monitorline ) &optionline;;	
 
 	  %if %upcase(&bprint) ^=YES and %upcase(&bplot) ^=YES 	/* Disable output tables and plots as applicable */
@@ -6027,9 +5933,7 @@ proc mcmc data=_bb_ outpost= &blog monitor = ( &monitorline ) &optionline;;
 		  &initlineb3;;										/* initialize cubic coefficients and related arrays (if applicable) */
 
           %do _i = 1 %to &g; 
-  	        %do _j = 1 %to &n; 
-		      &&initetamnarr&_j._&_i;;						/* initialize conditional mean for true states  */ 
-			%end;
+		      &&initetamnarr&_i;;						    /* initialize conditional mean for true states  */ 
 		  %end;
 
 		  do k = 1 to &g; 			  						/* initialize etaarr using Markov property of AR process */
@@ -6165,7 +6069,7 @@ run;
 /* eMKF: Disable ODS graphics */
 %if %upcase(&bplot) = YES %then ods graphics off;;
 
-%put Call to PROC MCMC concluded.;
+%put Call to PROC MCMC concluded;
 
 /*eMKF: Keep only the desired columns in the posterior log dataset */
 %if %upcase(&bARmodel) = INDEP_AR %then %do;
@@ -6653,13 +6557,13 @@ run;
 
 /*eMKF: Set up model statement symbolically for use in proc nlmixed */
 %let tline=;
-%if %upcase(&bvalue) = INDEP_CUBIC   %then %let tline= normal(&rtm.0*a[_group_] + &rtm.1*b1arr[_group_] + &rtm.2*b2arr[_group_] + &rtm.3*b3arr[_group_] + gamma[_time], _se**2);
-%if %upcase(&bvalue) = INDEP_QUAD    %then %let tline= normal(&rtm.0*a[_group_] + &rtm.1*b1arr[_group_] + &rtm.2*b2arr[_group_] + gamma[_time], _se**2);
-%if %upcase(&bvalue) = INDEP_LINEAR  %then %let tline= normal(&rtm.0*a[_group_] + &rtm.1*b1arr[_group_] + gamma[_time], _se**2);
-%if %upcase(&bvalue) = COMMON_CUBIC  %then %let tline= normal(&rtm.0*a[_group_] + &rtm.1*b1  + &rtm.2*b2  + &rtm.3*b3  + gamma[_time], _se**2);
-%if %upcase(&bvalue) = COMMON_QUAD   %then %let tline= normal(&rtm.0*a[_group_] + &rtm.1*b1  + &rtm.2*b2  + gamma[_time], _se**2);
-%if %upcase(&bvalue) = COMMON_LINEAR %then %let tline= normal(&rtm.0*a[_group_] + &rtm.1*b1  + gamma[_time], _se**2);
-%if %upcase(&bvalue) = DROPPED       %then %let tline= normal(&rtm.0*a[_group_] + gamma[_time], _se**2);
+%if %upcase(&bvalue) = INDEP_CUBIC   %then %let tline= normal(&rtm.0*a[_group_]+&rtm.1*b1arr[_group_]+&rtm.2*b2arr[_group_]+&rtm.3*b3arr[_group_]+gamma[_time],_se**2);
+%if %upcase(&bvalue) = INDEP_QUAD    %then %let tline= normal(&rtm.0*a[_group_]+&rtm.1*b1arr[_group_]+&rtm.2*b2arr[_group_]+gamma[_time],_se**2);
+%if %upcase(&bvalue) = INDEP_LINEAR  %then %let tline= normal(&rtm.0*a[_group_]+&rtm.1*b1arr[_group_]+gamma[_time],_se**2);
+%if %upcase(&bvalue) = COMMON_CUBIC  %then %let tline= normal(&rtm.0*a[_group_]+&rtm.1*b1+&rtm.2*b2+&rtm.3*b3+gamma[_time],_se**2);
+%if %upcase(&bvalue) = COMMON_QUAD   %then %let tline= normal(&rtm.0*a[_group_]+&rtm.1*b1+&rtm.2*b2+gamma[_time],_se**2);
+%if %upcase(&bvalue) = COMMON_LINEAR %then %let tline= normal(&rtm.0*a[_group_]+&rtm.1*b1+gamma[_time],_se**2);
+%if %upcase(&bvalue) = DROPPED       %then %let tline= normal(&rtm.0*a[_group_]+gamma[_time],_se**2);
 
 /* Fit a Non-linear mixed model. Capture covariance matrix COV and covariance matrix from additional estimate ECOV */
 
@@ -6770,19 +6674,19 @@ run;
 %let _emkfmu_ = ;
 %if %upcase(&bvalue) = INDEP_CUBIC or %upcase(&bvalue) = COMMON_CUBIC %then %do;
 	%let _emkfkeep_ = a b1 b2 b3;
-	%let _emkfmu_ = mu = a*&rtm.0 + b1*&rtm.1 + b2*&rtm.2 + b3*&rtm.3;
+	%let _emkfmu_ = mu=a*&rtm.0+b1*&rtm.1+b2*&rtm.2+b3*&rtm.3;
 %end;
 %if %upcase(&bvalue) = INDEP_QUAD or %upcase(&bvalue) = COMMON_QUAD %then %do;
 	%let _emkfkeep_ = a b1 b2;
-	%let _emkfmu_ = mu = a*&rtm.0 + b1*&rtm.1 + b2*&rtm.2;
+	%let _emkfmu_ = mu=a*&rtm.0+b1*&rtm.1+b2*&rtm.2;
 %end;
 %if %upcase(&bvalue) = INDEP_LINEAR or %upcase(&bvalue) = COMMON_LINEAR %then %do;
 	%let _emkfkeep_ = a b1;
-	%let _emkfmu_ = mu = a*&rtm.0 + b1*&rtm.1;
+	%let _emkfmu_ = mu=a*&rtm.0+b1*&rtm.1;
 %end;
 %if %upcase(&bvalue) = DROPPED %then %do;
 	%let _emkfkeep_ = a; 
-	%let _emkfmu_ = mu = a*&rtm.0;
+	%let _emkfmu_ = mu=a*&rtm.0;
 %end;
 
 /*eMKF: Re-structure estimates by _rep and _group_ */
@@ -8203,11 +8107,11 @@ run;
 /*eMKF: Set up array declarations symbolically for use in proc nlmixed */
 %let b1line=; %let b2line=; %let b3line=;
 %if %upcase(&bvalue) = INDEP_CUBIC or %upcase(&bvalue) = INDEP_QUAD or %upcase(&bvalue) = INDEP_LINEAR %then 
-	%let b1line= array o1b1arr(&g) o1b1arr1-o1b1arr&g %str(;) array o2b1arr(&g) o2b1arr1-o2b1arr&g %str(;) ;
+	%let b1line= array o1b1arr(&g) o1b1arr1-o1b1arr&g%str(;) array o2b1arr(&g) o2b1arr1-o2b1arr&g%str(;) ;
 %if %upcase(&bvalue) = INDEP_CUBIC or %upcase(&bvalue) = INDEP_QUAD %then 
-	%let b2line= array o1b2arr(&g) o1b2arr1-o1b2arr&g %str(;) array o2b2arr(&g) o2b2arr1-o2b2arr&g %str(;) ;
+	%let b2line= array o1b2arr(&g) o1b2arr1-o1b2arr&g%str(;) array o2b2arr(&g) o2b2arr1-o2b2arr&g%str(;) ;
 %if %upcase(&bvalue) = INDEP_CUBIC %then 
-	%let b3line= array o1b3arr(&g) o1b3arr1-o1b3arr&g %str(;) array o2b3arr(&g) o2b3arr1-o2b3arr&g %str(;) ;
+	%let b3line= array o1b3arr(&g) o1b3arr1-o1b3arr&g%str(;) array o2b3arr(&g) o2b3arr1-o2b3arr&g%str(;) ;
 
 /*eMKF: Set up model statement symbolically for use in proc nlmixed */
 %let _mdelta_ = delta;
@@ -9840,12 +9744,8 @@ run;
 	run;
 %end;
 
-%let wn=;
-%let wt1=1;
-%let wt2=;
-%let wi=0;
-%let wa=;
-%let wb=;
+%let wn=; %let wt1=1; %let wt2=;
+%let wi=0; %let wa=; %let wb=;
 
 /* eMKF: If format 2, then find number of time points and define generic variables for outcome(s) and SE(s) */
 %if %scan(&outcome,2) = %str() %then %do;
@@ -10123,7 +10023,6 @@ run;
 
 data _means_;
 run;
-
 data _means_;
   set &outformat;
   %if &by = %str() %then if impute=1;;
@@ -10144,17 +10043,14 @@ data _means_;
   order=inputorder;
   keep order _rep _group_ _time;
 run;
-
 proc sort data=_means_;
   by order;
 run;
-
 data _means_;
   set _means_;
   inputorder +1;
   drop order;
 run;
-
 proc sort data= _means_;
   by _rep _group_;
 run;
@@ -10162,12 +10058,10 @@ run;
 proc sort data= &outformat;
   by _rep _group_;
 run;
-
 data &outformat;
   merge &outformat(drop=inputorder) _means_(keep= _rep _group_ inputorder);
   by _rep _group_;
 run;
-
 proc sort data= &outformat;
   by _rep inputorder;
 run;
@@ -10474,7 +10368,7 @@ run;
 
 /* eMKF: return if no applicable model is indicated */
 %if %upcase(&uvar) ^= FULL_LINEAR and %upcase(&uvar) ^= FULL_QUAD  and %upcase(&uvar) ^= FULL_CUBIC  %then %do;
-		%put ERROR: No Gibbs sampler for mean hyper-parameters was found for the specified model &uvar. Please check.;
+		%put ERROR: No Gibbs sampler for mean hyper-parameters was found for the specified model &uvar: Please check!;
 		proc iml;
 		  print "  Error Note:";
 		  print "  No Gibbs sampler for mean hyper-parameters was found for the specified model. Please check. ";
@@ -10655,7 +10549,7 @@ run;
 	%upcase(&uvar) ^= FULL_CUBIC  and %upcase(&uvar) ^= INDEP_CUBIC  and %upcase(&uvar) ^= COMMON_CUBIC and
     %upcase(&uvar) ^= BMA_CUBIC   and %upcase(&uvar) ^= BMA_QUAD     and %upcase(&uvar) ^= BMA_LINEAR
 	%then %do;
-		%put ERROR: No Gibbs sampler was found for the specified model &uvar. Please check.;
+		%put ERROR: No Gibbs sampler was found for the specified model &uvar: Please check!;
 		proc iml;
 		  print "  Error Note:";
 		  print "  No Gibbs sampler was found for the specified model. Please check. ";
@@ -12800,7 +12694,7 @@ run;
 /* eMKF: return if no applicable model is indicated */
 %if %upcase(&uvar) ^= BMA_CUBIC and %upcase(&uvar) ^= BMA_QUAD and %upcase(&uvar) ^= BMA_LINEAR
 	%then %do;
-		%put ERROR: No Gibbs sampler for model flag was found for the specified Bayesian model averaging &uvar. Please check.;
+		%put ERROR: No Gibbs sampler for model flag was found for the specified Bayesian model averaging &uvar: Please check!;
 		proc iml;
 		  print "  Error Note:";
 		  print "  No Gibbs sampler for model flag was found for the specified Bayesian model averaging. Please check. ";
