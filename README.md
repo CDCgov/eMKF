@@ -44,59 +44,52 @@ Please refer to the documentation provided in <mark>[Link to Series 2 report]</m
 ### Outline of methodological differences between eMKF (version 1.4 2024-08-10) and the original MKF
 
 * Time points
-
-     1.   eMKF allows for time points to be unequally spaced.
-     2.   In the MLE-based setting, eMKF updates the recursion formulas used to determine the MSE-optimal estimators (BLUPs) of the true states to allow for an arbitrary lag between successive time points instead of lag=1 (see Lockwood et al 2011; DOI: 10.1002/sim.3897).
+  * eMKF allows for time points to be unequally spaced.
+  * In the MLE-based setting, eMKF updates the recursion formulas used to determine the MSE-optimal estimators (BLUPs) of the true states to allow for an arbitrary lag between successive time points instead of lag=1 (see Lockwood et al 2011; DOI: 10.1002/sim.3897).
 
 * Polynomial trends
-
-     3.   eMKF allows for quadratic and cubic time trends to be fitted in both the Bayesian and MLE-based estimation settings.
-     4.   By default, eMKF does not allow fitting a degree k polynomial trend (k=0,1,2,3) unless there are k+4 available time points.
-     5.   eMKF returns an error if there is only one available time point per group.
-     6.   eMKF pre-transforms trend coefficients using an orthogonal polynomial design matrix for comparability of coefficients in linear, quad, and cubic trend models. The coefficients are reverse-transformed before the program exits so the user only sees the "raw" coefficients.
+  * eMKF allows for quadratic and cubic time trends to be fitted in both the Bayesian and MLE-based estimation settings.
+  * By default, eMKF does not allow fitting a degree k polynomial trend (k=0,1,2,3) unless there are k+4 available time points.
+  * eMKF returns an error if there is only one available time point per group.
+  * eMKF pre-transforms trend coefficients using an orthogonal polynomial design matrix for comparability of coefficients in linear, quad, and cubic trend models. The coefficients are reverse-transformed before the program exits so the user only sees the "raw" coefficients.
 
 * Sampling variances
-
-     7.   eMKF allows for random sampling variances in the Bayesian setting (see Polettini 2017; DOI 10.1214/16-BA1019, for an overview).
-     8.   eMKF uses (effective) sample size (neff) as degrees of freedom in chi-squared distribution of group- and time-specific sampling variance, therefore neff must be supplied. 
+  * eMKF allows for random sampling variances in the Bayesian setting (see Polettini 2017; DOI 10.1214/16-BA1019, for an overview).
+  * eMKF uses (effective) sample size (neff) as degrees of freedom in chi-squared distribution of group- and time-specific sampling variance, therefore neff must be supplied. 
 
 * Disparities calculations
-
-     9.   In the Bayesian setting, eMKF estimates all pairwise differences and ratios between groups at the latest time point.
-     10. Additional disparities measures (highest and lowest rates, maximal rate difference and ratio, summary rate difference and ratio) are also calculated.
-     11. The user can further calculate any other measures he/she desires from the posterior draws, which the user can request to be saved to the workspace. 
-      These features differ from MKF where only pairwise differences were calculated and the full MCMC samples from the joint posterior distribution were not available.
+  * In the Bayesian setting, eMKF estimates all pairwise differences and ratios between groups at the latest time point.
+  * Additional disparities measures (highest and lowest rates, maximal rate difference and ratio, summary rate difference and ratio) are also calculated.
+  * The user can further calculate any other measures he/she desires from the posterior draws, which the user can request to be saved to the workspace.
+  * These features differ from MKF where only pairwise differences were calculated and the full MCMC samples from the joint posterior distribution were not available.
 
 * Bayesian estimation setting
-
-     12. eMKF implements "independent" and "common" trend options, which were left out of the RAND version of the macro, in addition to the "full" hierarchical Bayesian model (see RAND User's Guide "TR997_compiled").
-     13. eMKF implements Bayesian model averaging using a mixture prior approach, up to linear (3 possible models), quadratic (5 possible models), or cubic (7 possible models).
-     14. eMKF replaces the call to the external .exe file (which consisted of pre-compiled C code) with a call to PROC MCMC.
-     15. eMKF implements Gibbs sampling in PROC MCMC by calling user defined samplers (UDSs) that are custom-built and precompiled using PROC FCMP.
-     16. eMKF replaces z-score-based convergence diagnostic used in MKF with robust version of the Gelman-Rubin diagnostic (see Vehtari et al 2021; DOI 10.1214/20-BA1221).
-     17. eMKF applies the Gelman-Rubin diagnostic to all model parameters, not just for the true state predictions (etas) as in the original MKF.
-     18. eMKF defaults to more stringent threshold of 1.01 instead of 1.10 for the Gelman-Rubin diagnostic, as per recommendation in Vehtari et al (2021). 
-     19. eMKF defaults to 4 chains instead of 3, as per recommendation in Vehtari et al (2021). Each chain is further split in 2 to compute the Gelman-Rubin diagnostic.
-     20. eMKF uses closed-form expressions for the determinant, inverse, and Cholesky decomposition of the AR variance-covariance matrix whenever possible to speed up calculations.
-     21. eMKF allows the user to select the built-in slice sampler in PROC MCMC to use instead of the traditional random walk MH sampler for sampling AR parameters + SD hyperparameters.
+  * eMKF implements "independent" and "common" trend options, which were left out of the RAND version of the macro, in addition to the "full" hierarchical Bayesian model (see RAND User's Guide "TR997_compiled").
+  * eMKF implements Bayesian model averaging using a mixture prior approach, up to linear (3 possible models), quadratic (5 possible models), or cubic (7 possible models).
+  * eMKF replaces the call to the external .exe file (which consisted of pre-compiled C code) with a call to PROC MCMC.
+  * eMKF implements Gibbs sampling in PROC MCMC by calling user defined samplers (UDSs) that are custom-built and precompiled using PROC FCMP.
+  * eMKF replaces z-score-based convergence diagnostic used in MKF with robust version of the Gelman-Rubin diagnostic (see Vehtari et al 2021; DOI 10.1214/20-BA1221).
+  * eMKF applies the Gelman-Rubin diagnostic to all model parameters, not just for the true state predictions (etas) as in the original MKF.
+  * eMKF defaults to more stringent threshold of 1.01 instead of 1.10 for the Gelman-Rubin diagnostic, as per recommendation in Vehtari et al (2021). 
+  * eMKF defaults to 4 chains instead of 3, as per recommendation in Vehtari et al (2021). Each chain is further split in 2 to compute the Gelman-Rubin diagnostic.
+  * eMKF uses closed-form expressions for the determinant, inverse, and Cholesky decomposition of the AR variance-covariance matrix whenever possible to speed up calculations.
+  * eMKF allows the user to select the built-in slice sampler in PROC MCMC to use instead of the traditional random walk MH sampler for sampling AR parameters + SD hyperparameters.
 
 * MLE-based estimation setting
-
-     22. In eMKF, any subset of the seven allowable models (indep_cubic, _quad, _linear; common_cubic, _quad, _linear; and dropped) can be averaged. 
-     23. However, the code checks the specified models and adds a common "descendent" if is not already included, so as to have a reference model for Bayes factors.
-     24. eMKF increases the maxiter option for PROC NLMIXED to 400 instead of 200 (default) when dealing with two outcomes to improve convergence when k = 2,3.
-     25. eMKF initializes parameters to pass to PROC NLMIXED using the appropriate 'by' group stratum/replication (PROC REG). This differs from MKF where only the first stratum/replication was used to initialize the regression coefficients across strata/replications.
-     26. eMKF initializes parameters to pass to PROC NLMIXED using the appropriate degree k polynomial regression (PROC REG), including for k=0. This differs from MKF where for k=0 (dropped), the intercept values were initialized at those from the linear regression y=a+b*t instead of y=a.
-     27. For the dropped (k=0) case, eMKF only keeps the column vector of 1s in the X matrix (and subsequent matrix calculations for the MSE). This differs from MKF where both the 1s and ts column were kept in the X matrix.
-     28. The number of groups was limited to 15 in the original MKF due to the use IML function block to create block diagonal matrices in the calculation of MSEs; this was corrected in eMKF to allow an arbitrary number of groups.
+  * In eMKF, any subset of the seven allowable models (indep_cubic, _quad, _linear; common_cubic, _quad, _linear; and dropped) can be averaged. 
+  * However, the code checks the specified models and adds a common "descendent" if is not already included, so as to have a reference model for Bayes factors.
+  * eMKF increases the maxiter option for PROC NLMIXED to 400 instead of 200 (default) when dealing with two outcomes to improve convergence when k = 2,3.
+  * eMKF initializes parameters to pass to PROC NLMIXED using the appropriate 'by' group stratum/replication (PROC REG). This differs from MKF where only the first stratum/replication was used to initialize the regression coefficients across strata/replications.
+  * eMKF initializes parameters to pass to PROC NLMIXED using the appropriate degree k polynomial regression (PROC REG), including for k=0. This differs from MKF where for k=0 (dropped), the intercept values were initialized at those from the linear regression y=a+b*t instead of y=a.
+  * For the dropped (k=0) case, eMKF only keeps the column vector of 1s in the X matrix (and subsequent matrix calculations for the MSE). This differs from MKF where both the 1s and ts column were kept in the X matrix.
+  * The number of groups was limited to 15 in the original MKF due to the use IML function block to create block diagonal matrices in the calculation of MSEs; this was corrected in eMKF to allow an arbitrary number of groups.
 
 * Macro usability
-
-     29. eMKF includes extensive comments and streamlines the code for readability.
-     30. eMKF allows the user additional flexibility in customizing model output and diagnostics, and streamlines the SAS workspace.
-     31. eMKF checks for errors in macro parameter specification, including length of character strings for prefix of output datasets and the maximum number of groups and/or data points that the code implementation can handle.
-     32. Std. Error label in output table was replaced with RMSE in eMKF to avoid confusion.
-     33. Zero SEs and effective sample sizes (when applicable) are imputed using the average across timepoints for the given group and stratum. Any remaining zero SEs and effective sample sizes (when applicable) are imputed timepoint by timepoint using the average across strata for the given group. 
+  * eMKF includes extensive comments and streamlines the code for readability.
+  * eMKF allows the user additional flexibility in customizing model output and diagnostics, and streamlines the SAS workspace.
+  * eMKF checks for errors in macro parameter specification, including length of character strings for prefix of output datasets and the maximum number of groups and/or data points that the code implementation can handle.
+  * Std. Error label in output table was replaced with RMSE in eMKF to avoid confusion.
+  * Zero SEs and effective sample sizes (when applicable) are imputed using the average across timepoints for the given group and stratum. Any remaining zero SEs and effective sample sizes (when applicable) are imputed timepoint by timepoint using the average across strata for the given group. 
 
 
 ### References
