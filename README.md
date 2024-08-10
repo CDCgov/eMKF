@@ -41,7 +41,7 @@ Please refer to the documentation provided in <mark>[Link to Series 2 report]</m
 * <mark>[Link to Appendix Table II-1 in Guidance report] (Default eMKF macro parameter settings)</mark>
 
 
-### Outline of methodological differences between eMKF (v 1.3) and the original MKF (implemented as of 02-Aug-2024)
+### Outline of methodological differences between eMKF (version 1.4 2024-08-10) and the original MKF
 
 * Time points
 
@@ -94,7 +94,7 @@ Please refer to the documentation provided in <mark>[Link to Series 2 report]</m
 
      29. eMKF includes extensive comments and streamlines the code for readability.
      30. eMKF allows the user additional flexibility in customizing model output and diagnostics, and streamlines the SAS workspace.
-     31. eMKF checks for errors in macro parameter specification, including length of character strings for prefix of output datasets.
+     31. eMKF checks for errors in macro parameter specification, including length of character strings for prefix of output datasets and the maximum number of groups and/or data points that the code implementation can handle.
      32. Std. Error label in output table was replaced with RMSE in eMKF to avoid confusion.
      33. Zero SEs and effective sample sizes (when applicable) are imputed using the average across timepoints for the given group and stratum. Any remaining zero SEs and effective sample sizes (when applicable) are imputed timepoint by timepoint using the average across strata for the given group. 
 
