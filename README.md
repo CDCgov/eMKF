@@ -44,8 +44,7 @@ Talih M, Rossen LM, Patel P, Earp M, Parker JD. The enhanced modified Kalman fil
 * <mark>[Link to Series 2 report]</mark>
 * <mark>[Link to Appendix II Table in Guidance report] (Default eMKF macro parameter settings)</mark>
 
-
-## Outline of methodological differences between eMKF (version 1.4 2024-08-10) and the original MKF
+## Methodological differences between eMKF (version 1.4 2024-08-10) and original MKF
 
 ### Time points
 * eMKF allows for time points to be unequally spaced.
@@ -98,8 +97,7 @@ Talih M, Rossen LM, Patel P, Earp M, Parker JD. The enhanced modified Kalman fil
 * The "Std. Error" label in output tables was replaced with "RMSE" (root mean squared error) in eMKF to avoid confusion.
 * Zero SEs and effective sample sizes (when applicable) are imputed using the average across timepoints for the given group and stratum. Any remaining zero SEs and effective sample sizes (when applicable) are imputed timepoint by timepoint using the average across strata for the given group. 
 
-
-## References
+### References
 
 Lockwood JR, McCaffrey DF, Setodji CM, Elliott MN. Smoothing across time in repeated cross-sectional data. Stat Med 30(5):584–94. 2011. DOI: https://dx.doi.org/10.1002/sim.3897.
 
