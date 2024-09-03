@@ -33,16 +33,17 @@ Other requirements of the eMKF macro:
 * Estimates of 0 are allowed, but 0 SEs are imputed by the macro using the average SE across the non-zero SEs for that group/stratum. However, if estimates and corresponding SEs for a given group/stratum are 0 across all timepoints included, analysts should consider aggregating the data into larger groups to ensure that there are some non-zero estimates for all groups/strata. As a preliminary solution, the macro will impute such 0 SEs using the average SE across strata for each given timepoint.
 * As of the present version of the eMKF macro, the number of groups cannot be larger than 204 and the number of groups times the number of time points cannot exceed 5,508 per stratum.
 
-Please refer to the documentation provided in <mark>[Link to Series 2 report]</mark> for more details. 
+Please refer to the documentation provided in https://www.cdc.gov/nchs/data/series/sr_02/sr02-209.pdf for more details. 
 
 ### Suggested citation
 Talih M, Rossen LM, Patel P, Earp M, Parker JD. The enhanced modified Kalman filter (eMKF) tool for small domain estimation [version 1.4 2024-08-10]. National Center for Health Statistics. 2024. Available from: https://github.com/CDCgov/eMKF.
 
 ## Related documents
 
-* <mark>[Link to Series 2 report]</mark>
-* <mark>[Link to Series 2 report]</mark>
-* <mark>[Link to Appendix II Table in Guidance report] (Default eMKF macro parameter settings)</mark>
+* https://www.cdc.gov/nchs/data/series/sr_02/sr02-209.pdf
+   * Appendix II describes the parameter settings, defaults and functionality
+* https://www.cdc.gov/nchs/data/series/sr_02/sr02-208.pdf
+
 
 ## Methodological differences between eMKF (version 1.4 2024-08-10) and original MKF
 
@@ -103,11 +104,11 @@ Lockwood JR, McCaffrey DF, Setodji CM, Elliott MN. Smoothing across time in repe
 
 Polettini S. A generalised semiparametric Bayesian Fay–Herriot model for small area estimation shrinking both means and variances. Bayesian Anal 12(3):729–52. 2016. DOI: https://dx.doi.org/10.1214/16-BA1019.
     
-Rossen LM, Talih M, Patel P, Earp M, Parker JD. Evaluation of an enhanced modified Kalman filter approach for estimating health outcomes in small subpopulations. National Center for Health Statistics. Vital Health Stat 2(208). 2024. DOI: https://dx.doi.org/10.15620/cdc/157496.
+Rossen LM, Talih M, Patel P, Earp M, Parker JD. Evaluation of an enhanced modified Kalman filter approach for estimating health outcomes in small subpopulations. National Center for Health Statistics. Vital Health Stat 2(208). 2024. DOI: https://dx.doi.org/10.15620/cdc/157496. Available from: https://www.cdc.gov/nchs/data/series/sr_02/sr02-208.pdf
 
 Setodji CM, Lockwood JR, McCaffrey DF, Elliott MN, Adams JL. The Modified Kalman Filter macro: User’s guide. RAND Technical Report No. TR-997-DHHS. 2011. Available from: https://www.rand.org/pubs/technical_reports/TR997.html.
 
-Talih M, Rossen LM, Patel P, Earp M, Parker JD. Technical guidance for using the modified Kalman filter in small-domain estimation at the National Center for Health Statistics. National Center for Health Statistics. Vital Health Stat 2(209). 2024. DOI: https://dx.doi.org/10.15620/cdc/157496.
+Talih M, Rossen LM, Patel P, Earp M, Parker JD. Technical guidance for using the modified Kalman filter in small-domain estimation at the National Center for Health Statistics. National Center for Health Statistics. Vital Health Stat 2(209). 2024. DOI: https://dx.doi.org/10.15620/cdc/157496. Available from: https://www.cdc.gov/nchs/data/series/sr_02/sr02-209.pdf
 
 Vehtari A, Gelman A, Simpson D, Carpenter B, Bürkner PC. Rank-normalization, folding, and localization: An improved Ȓ for assessing convergence of MCMC (with discussion). Bayesian Anal 16(2):667–718. 2021. DOI: https://dx.doi.org/10.1214/20-BA1221.
 
