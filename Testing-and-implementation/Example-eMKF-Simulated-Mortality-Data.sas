@@ -242,7 +242,10 @@ run;
 
 /************************************************************************************/
 /* Age-specific data stratified by state (borrowing strength across PopByAge groups */
+/* Running the below code is not recommended. Each model may take 40 hours or more. */
 /************************************************************************************/
+
+/* 
 
 /* Bayesian model averaging estimation */
 %let _timer_start = %sysfunc(datetime()); 	/* start timer */
@@ -322,5 +325,7 @@ title "Enhanced MKF. One outcome: Maximum likelihood-based model averaging with 
 	  );
 data _null_;
 	dur = datetime() - &_timer_start;		/* stop timer */
+
+ */
 	put 30*'-' / ' TOTAL DURATION:' dur time13.2 / 30*'-';
 run;
