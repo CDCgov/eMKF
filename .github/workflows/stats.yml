@@ -1,0 +1,21 @@
+name: Github Repo Statistics
+
+on:
+  schedule:
+    # Run this once per day, towards the end of the day for keeping the most
+    # recent data point most meaningful (hours are interpreted in UTC).
+    - cron: "0 23 * * *"
+  workflow_dispatch: # Allow for running this manually.
+
+jobs:
+  repostats:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-app-ocio-github-repo-statistics
+    steps:
+
+      - name: run github repository stats
+        uses: jgehrcke/github-repo-stats@v1.4.2
+        with:
+          ghtoken: ${{ secrets.ghrs_github_api_token }}
+          ghpagesprefix: https://cdcgov.github.io/eMKF
