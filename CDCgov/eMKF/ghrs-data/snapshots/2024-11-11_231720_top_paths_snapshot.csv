@@ -1,0 +1,11 @@
+url_path,views_total,views_unique
+/CDCgov/eMKF,7,4
+/CDCgov/eMKF/blob/main/emkf_macro.sas,4,2
+/CDCgov/eMKF/blob/main/Testing-and-implementation/Compare-eMKF-to-MKF.sas,4,2
+/CDCgov/eMKF/blob/main/Testing-and-implementation/Example-eMKF-NHANES-Data.sas,3,2
+/CDCgov/eMKF/blob/main/Testing-and-implementation/Example-eMKF-Simulated-Mortality-Data.sas,3,2
+/CDCgov/eMKF/tree/main/Testing-and-implementation,3,2
+/CDCgov/eMKF/commits,3,1
+/CDCgov/eMKF/tree/github-repo-stats/CDCgov/eMKF/ghrs-data,3,1
+/CDCgov/eMKF/tree/main/Sample-data-files,2,2
+/CDCgov/eMKF/tree/github-repo-stats,2,1
