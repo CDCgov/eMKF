@@ -1,0 +1,11 @@
+url_path,views_total,views_unique
+/CDCgov/eMKF,4,3
+/CDCgov/eMKF/blob/main/emkf_macro.sas,4,2
+/CDCgov/eMKF/blob/main/Testing-and-implementation/Compare-eMKF-to-MKF.sas,2,1
+/CDCgov/eMKF/blob/main/Testing-and-implementation/Example-eMKF-NHANES-Data.sas,2,1
+/CDCgov/eMKF/blob/main/Testing-and-implementation/Example-eMKF-Simulated-Mortality-Data.sas,2,1
+/CDCgov/eMKF/blob/main/Sample-data-files/nhanes9920obesity.csv,1,1
+/CDCgov/eMKF/blob/main/Sample-data-files/nhis.sas7bdat,1,1
+/CDCgov/eMKF/blob/main/Sample-data-files/Underlying%20Cause%20of%20Death%2C%201999-2020%20States%20V01-Y89%20by%20Race%20and%20Ethnicity.csv,1,1
+/CDCgov/eMKF/blob/main/Sample-data-files/Underlying%20Cause%20of%20Death%2C%201999-2020%20States%20V01-Y89%20by%20Race%2C%20Ethnicity%2C%20and%20Age.csv,1,1
+/CDCgov/eMKF/commit/5c1676460eb83d9531ea826fa10b9787301a2f12,1,1
