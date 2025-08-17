@@ -1,0 +1,11 @@
+url_path,views_total,views_unique
+/CDCgov/eMKF,5,4
+/CDCgov/eMKF/tree/main/Testing-and-implementation,2,2
+/CDCgov/eMKF/blob/main/Testing-and-implementation/Example-eMKF-Simulated-Mortality-Data.sas,2,1
+/CDCgov/eMKF/tree/main,2,1
+/CDCgov/eMKF/blob/main/emkf_macro.sas,1,1
+/CDCgov/eMKF/blob/main/Testing-and-implementation/Example-eMKF-NHANES-Data.sas,1,1
+/CDCgov/eMKF/labels/bug,1,1
+/CDCgov/eMKF/tree/main/CDCgov,1,1
+/CDCgov/eMKF/tree/main/CDCgov/eMKF,1,1
+/CDCgov/eMKF/tree/main/Sample-data-files,1,1
