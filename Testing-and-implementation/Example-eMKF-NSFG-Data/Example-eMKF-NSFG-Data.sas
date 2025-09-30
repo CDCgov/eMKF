@@ -66,22 +66,22 @@ run;
 %let _timer_start = %sysfunc(datetime()); /* Start timer */
 title "Enhanced MKF. One outcome: Bayesian model averaging for up to cubic trends";
  %mkf(data 		  = emkf_input,
-	  group 	    = metro_int, 
-	  by 	        = agegrp_con,
-    time 		    = year, 
+	  group 	  = metro_int, 
+	  by 	      = agegrp_con,
+      time 		  = year, 
 	  outcome 	  = loss, 
-	  se 		      = se,  
-	  neff 		    = neff,   
+	  se 		  = se,  
+	  neff 		  = neff,   
 	  randomVars  = YES,
 	  Bayesmodel  = bma_cubic, 
-	  nbi 		    = 20000, 
-	  nmc 		    = 50000,
-	  thin 		    = 2,
+	  nbi 		  = 20000, 
+	  nmc 		  = 50000,
+	  thin 		  = 2,
 	  mcmcplot 	  = NO,
-    GRthreshold = 1.1,
+      GRthreshold = 1.1,
 	  modelprint  = NO,
-	  seed 		    = 44,
-    out 		    = bmac 
+	  seed 		  = 44,
+      out 		  = bmac 
     );
 data _null_;
  	dur = datetime() - &_timer_start; /* Stop timer */
