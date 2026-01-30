@@ -64,7 +64,7 @@ proc print data=NHANESobesity(obs=20);
 run;
 
 /* Compile the enhanced Modified Kalman Filter macro */
-%include "&user_path\eMKF\MKFmacro\emkf_macro.sas";
+%include "&user_path\eMKF\MKFmacro\emkf_macro_v24.sas";
 
 /* Conduct Bayesian model averaging estimation */
 %let _timer_start = %sysfunc(datetime()); 	/* start timer */
