@@ -94,7 +94,7 @@ Talih M, Rossen LM, Patel P, Earp M, Parker JD. The enhanced modified Kalman fil
 * The SAS eMKF macro allows the user to select the built-in slice sampler in SAS PROC MCMC to use instead of the traditional random walk Metropolis-Hastings sampler for sampling AR parameters and standard deviation hyperparameters.
 
 ### MLE-based estimation setting
-* In the SAS eMKF macro, any subset of the seven allowable models (indep_cubic, indep_quad, indep_linear; common_cubic, common_quad, common_linear; and dropped) can be averaged; see [Link to Appendix II Table in Guidance report]. 
+* In the SAS eMKF macro, any subset of the seven allowable models (indep_cubic, indep_quad, indep_linear; common_cubic, common_quad, common_linear; and dropped) can be averaged; see [Appendix II Table in Guidance report](https://www.cdc.gov/nchs/data/series/sr_02/sr02-209.pdf]). 
 * However, the code checks the specified models and adds a common "descendent" if is not already included, so as to have a reference model for Bayes factors. Specifically:
     * If both the indep_quad and common_cubic models are specified, then the common_quad model will be added if needed.
     * If both the indep_linear and common_cubic models are specified, then the common_linear model will be added if needed.
