@@ -22,6 +22,10 @@ run;
 data NHISdata2;
  set NHISdata;
  /* calculate effective sample sizes for use with eMKF macro */
+ /* Please note that the calculation provided here is for illustration purposes only. 
+    Refinements include truncating effective sample size at the nominal sample size to avoid neff > n.
+    See: Korn EL, Graubard BI. Analysis of Health Surveys. 1999. Wiley: New York.
+  */
  stroke_neff = stroke*(1-stroke)/stroke_se**2;
  diabetes_neff = diabetes*(1-diabetes)/diabetes_se**2;
  keep race_ethnicity year stroke stroke_se stroke_neff diabetes diabetes_se diabetes_neff;
