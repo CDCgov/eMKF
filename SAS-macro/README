@@ -1,0 +1,241 @@
+/* SAS eMKF macro version 2.4 */
+
+/* See the eMKF Guidance Report (DOI: 10.15620/cdc/157496) for background and how to use the SAS eMKF macro.
+ *
+ * The NCHS eMKF macro expands RAND's MKF macro to:
+ *
+ *  - [NEW in v2.4] allow for trend break (level shift or full break) at a specified break point.
+ *  - [NEW in v2.4] to better accommodate fractional timepoints, restrict AR(1) auto-correlation parameter for random effects to the interval [0,1) instead of (-1,1).
+ *  - [NEW in v2.4] implement truncated normal random number generator with PROC FCMP and use truncated normal priors for all AR(1) parameters and hyper-parameters.
+ *  - allow for unequally-spaced time points.
+ *	- allow for quadratic and cubic trends in both MLE-based and Bayesian estimation settings.
+ *  - allow for model averaging over (orthogonal) polynomial trend model sequences up to cubic in both MLE-based and Bayesian settings.
+ *  - allow for common as well as group-specific AR parameters rho and tausq for the random effects in the Bayesian setting and [NEW in v2.4] MLE-based setting.
+ *  - [NEW in v2.4] added specification for common autocorrelation parameter rho but independent variance parameters tausq by group for the random effects.
+ * 	- allow for random sampling variances in the Bayesian setting.
+ *  - implement Gibbs sampling in PROC MCMC using user defined samplers (UDSs) that are precompiled with PROC FCMP, replacing .exe file (C code).
+ *  - expand calculations of between-group disparities at the latest time point in the Bayesian setting.
+ *
+ * Below is an overview of the eMKF macro functionality, excerpted from emkf_macro_v24.sas 
+ */
+
+/* MKF macro + eMKF expansion in 2023 Q1-Q2 by M. Talih + expanded in 2025 Q1-Q2 to allow for trend break specification (eMKF v2.4)
+Macro defined 03-16-2007, Revised 05-08-09 D. McCaffrey. Revised 03-15-2010 [RAND Statistics Group]
+It allows for the estimation of parameters from the non-linear mixed effect model.
+In addition it allows for the estimation of model averaging as well as Bayesian estimates
+
+1- Printing (modified for eMKF)
+
+modelprint  : YES will print the proc nlmixed and/or proc mcmc results and NO will not. Default is NO.
+finalprint  : YES will print MKF estimates for last time point at the end of the estimations and NO will not. Default is YES.
+
+2- data and variables (eMKF v2.4 streamlining: "format 2" is the only supported option)
+
+data 		: name of the dataset. Must be in long/stacked format ("format 2" in previous versions of the macro)
+outcome : the outcome of interest (data "format 2")
+se      : the standard error of the outcome (data "format 2")
+neff		: (eMKF) (Effective) sample sizes of the outcomes for the random sampling variance case in the Bayesian model
+		  	  If empty, but random sampling variances are requested, an error is returned. Ignored in the MLE-based models.
+time    : the time variable (data "format 2")
+by      : allows models to run for multiple strata at the same time and can be used for simulations
+group   : the different groups (e.g., race/ethnicity group) variable
+breakPoint  : [New in eMKF v2.4] specifies value of timepoint at which trend break occurs, if any (default is none).
+breakType   : [New in eMKF v2.4] indicates whether trend break impacts intercepts only (level_break or <empty> [default]), or all regression coefficients (full_break).
+
+3- Modeling option: The linear mixed model
+
+slopes : the type of slope one needs: eMKF options are the following:
+
+         indep_cubic	: The values of the parameters b1, b2, and b3 are computed for each group
+         indep_quad		: b3=0. The values of the parameters b1 and b2 are computed for each group
+         indep_linear : b3=0 and b2=0. The value of the slope b1 is computed for each group
+         common_cubic	: The values of each of the parameters b1, b2, and b3 are assumed to be the same across groups
+         common_quad	: b3=0. The values of each of the parameters b1 and b2 are assumed to be the same across groups
+         common_linear: b3=0 and b2=0. The value of the slope b1 is assumed to be the same across groups
+         dropped    	: A model without time trend is computed (b3=0, b2=0, b1=0).
+         (empty)		  : DEFAULT when using one outcome -- results in Bayesian approach only.
+
+         eMKF: the number of time points will be checked and an error returned if:
+	  	  * Cubic trend is requested when there are less than 5 time points
+	  	  * Quadratic trend is requested when there are less than 4 time points
+	  	  * Linear trend is requested when there are less than 3 time points
+	  	  * There are less than 2 time points
+
+         If multiple options are selected, model averaging is computed using those options
+           * eMKF: When using two outcomes, DEFAULT is model average over all models up to cubic.
+           * eMKF: Combinations will be checked to ensure a common reference (shared descendent) model for the Bayes factor calculations.
+		  	** If both indep_quad and common_cubic are selected, then common_quad will be added if needed.
+		  	** If both indep_linear and common_cubic are selected, then common_linear will be added if needed.
+		  	** If both indep_linear and common_quad are selected, then common_linear will be added if needed.
+
+4- Modeling option: The Bayesian model
+
+Bayesmodel : This is the Bayesian model one wants to fit. eMKF options are the following:
+
+		bma_cubic   : (eMKF v2.4: DEFAULT with no trend break) Bayesian model averaging implemented using a mixture of polynomial trend models up to unconstrained cubic.
+		bma_quad	  : Bayesian model averaging implemented using a mixture of polynomial trend models up to unconstrained quadratic.
+		bma_linear  : (eMKF v2.4: DEFAULT with trend break) Bayesian model averaging implemented using a mixture of polynomial trend models up to unconstrained linear.
+        full_cubic 	  : Fully Bayesian cubic trends. The b1s, b2s, and b3s are independent draws from multilevel priors.
+        full_quad 	  : Fully Bayesian quadratic trends. Here, b3s are 0, and b1s and b2s are independent draws from multilevel priors.
+        full_linear   : Fully Bayesian linear trends. Here, b3s and b2s are 0, and b1s are independent draws from a multilevel prior.
+        indep_cubic	  : Bayesian cubic trends. The b1s, b2s, and b3s are independent draws from uninformative (flat) priors.
+        indep_quad	  : Bayesian quadratic trends. Here, b3s are 0 and b1s and b2s are independent draws from uninformative (flat) priors.
+        indep_linear  : Bayesian linear trends. Here, b3s and b2s are 0, and b1s are independent draws from an uninformative (flat) prior.
+        common_cubic  : Bayesian model with common cubic trend. The common b1, b2, and b3 are each drawn from an uninformative (flat) prior.
+        common_quad	  : Bayesian model with common quadratic trend. b3=0 and the common b1 and b2 are each drawn from an uninformative (flat) prior.
+        common_linear : Bayesian model with common linear trend. b3=0, b2=0, and the common b1 is drawn from an uninformative (flat) prior.
+        dropped    	  : Bayesian model with no time trend is computed (b3=0, b2=0, b1=0).
+
+BayesmodelAvg :	(eMKF) If multiple options are selected in Bayesmodel and BayesmodelAvg = NO or empty, 
+				all selected models are included in the output datasets. 
+			 	However, only the last model in the specified sequence is used for printing the MKF estimates for last time point.
+ 			 	If BayesmodelAvg = YES (DEFAULT) and more than one model is specified, then model averaging up to the largest 
+				unconstrained polynomial trend that was listed is conducted.
+
+ARmodel : If common_ar (default), groups will share AR(1) parameters rho and tausq.
+		  If common_arh (new in eMKF v2.4), each group will have its own variance parameter tausq, but share a common autocorrelation coefficient rho. 
+		  If indep_ar, each group will have its own set of stationary AR(1) parameters rho and tausq, drawn from a common prior distribution. 
+
+randomVars : (eMKF) Default is YES. 
+			 Sampling variances will be treated as scaled chi-squared random variables with an inverse gamma prior. 
+
+5- Output prefix (modified for eMKF)
+
+out     : The name for the output prefix. Default is param. 
+		  Outputs (prefix + suffix) are saved. Here are some of the relevant suffixes:
+           _pred    : Kalman prediction of the outcome of interest includes original values as well as parameters
+           _bayes   : Kalman prediction of the outcome from bayesian modeling
+         (e.g., for OUT=param then PARAM_PRED will be the Kalman prediction data of the outcome of interest.)
+
+nlmixedDetails: (eMKF v2.4 streamlining) (default = NO) to omit model datasets with fit details/statistics and retain only predictions and regression coefficients
+xtrakeep	  : Any variable one wants to keep in the data while running models: weights, ... (eMKF: could be used to retain labels for multiyear data)
+comparedata, comparedto  : (eMKF) options from MKF allowing for estimating disparities/differences in Bayesian setting
+
+6- Parameters that should only be changed by experienced users (modified for eMKF)
+
+ pdigit	: Number of decimal digits for the printed outputs. Default is set to 4.
+
+ MLE-based model parameters (eMKF: passed on to proc nlmixed)
+ 			 		 (eMKF v2.4 streamlining: _rho_ and _tausq_ can no longer be user-supplied -- they are estimated instead)
+
+ nlmixedDF  : Non-linear model degrees of freedom. The default is set pretty high at 1,0000
+ nlmixedTech: (eMFK v2.4 streamlining) (defaults to NEWRAP for one outcome, and QUANEW for two) -- gives user control over choice of optimization algorithm for MLE
+
+ Bayes model parameters (eMKF: passed on to proc mcmc)
+
+ chains   		: number of chains to run for the Bayesian estimation. Default is 4, as per Vehtari et al (2021; DOI 10.1214/20-BA1221)
+ GRthreshold	: threshold to use for Gelman-Rubin convergence diagnostic, usually no larger than 1.1. Default is 1.01, as per Vehtari et al.
+ mcmcplot			: if YES, within-chain trace/diagnostics plots from proc mcmc will be included (default is NO)
+ mcmclog   		: if YES, the full posterior samples will be retained in the work directory (default is NO, as dataset will be large)
+ seed     		: random number generating seed that will allow the user to reproduce the same results in the Bayesian model
+ maxtune			: maximum number of proposal tuning loops (if empty, proc mcmc default of 24 is used; if 0, tuning will be skipped)
+ ntu				  : number of tuning iterations to use in each MCMC proposal tuning phase (if empty, proc mcmc default of 500 is used)
+ nbi	 			  : number of burn-in in MCMC iterations (if empty, proc mcmc default of 1000 is used; if 0, burn-in will be skipped)
+ nmc	 			  : number of post-burn-in MCMC iterations (if empty, proc mcmc default of 1000 is used)
+ thin				  : controls thinning rate (if empty, proc mcmc default of 1 is used)
+ accepttol		: tolerance for target acceptance probabilities (targetaccept +|- accepttol). If empty, proc mcmc defaults are used.
+ targetaccept	: target acceptance rate for random walk Metropolis. If empty, proc mcmc defaults are used (see proc mcmc documentation). 
+ propcov			: method used in constructing initial covariance matrix for the MH algorithm (see proc mcmc documentation).
+					      If empty, proc mcmc default of IND will be used.
+ init				  : Option for generating initial values for the parameters. If empty, proc mcmc defaults to MODE (see proc mcmc documentation).
+					      eMKF default is REINIT, which resets model parameters to the user-supplied initial values after tuning. 
+ slicesampler	: YES to use the slice sampler instead of MH algorithm for parameters that are not included in the Gibbs sampling steps. 
+					       Default is NO due to heavier computational load.
+ checkSampleSize: YES (default) to check sample size is large enough before proceeding. Set to NO to replicate earlier MKF from RAND.
+ orpoly  			: YES (default) for pre-transforming the design matrix using SAS IML orpol function. NO for "raw" polynomials.
+          			If YES, regression coefficients will be reverse-transformed prior to macro end. 
+					      However, prior parameters below are assumed to be for the coefficients of the orthogonal polynomial regression if orpoly=YES.
+
+ ******************** New in eMKF v2.4 for all regression-related parameters: user can optionally specify separate values for segment 2 in trend break scenarios
+ malpha, s2malpha : prior mean for intercepts
+ palpha, s2palpha : prior precision for intercepts 
+ mbeta1, s2mbeta1	: prior mean for mean linear coefficient(s) across groups
+ pbeta1, s2pbeta1 : prior precision for mean linear coefficient(s) across groups
+ mbeta2, s2mbeta2 : prior mean for mean quadratic coefficient(s) across groups
+ pbeta2, s2pbeta2	: prior precision for mean quadratic coefficient(s) across groups
+ mbeta3, s2mbeta3 : prior mean for mean cubic coefficient(s) across groups
+ pbeta3, s2pbeta3	: prior precision for mean cubic coefficient(s) across groups
+ beta1l, beta1u		  : bounds for Unif(a,b) prior for SD of linear coefficients across groups -- used for hyperprior(s) in all 3 full_ models
+ s2beta1l, s2beta1u	: bounds for Unif(a,b) prior for SD of linear coefficients across groups -- used for hyperprior(s) in all 3 full_ models [segment 2]
+ beta2l, beta2u		  : bounds for Unif(a,b) prior for SD of quadratic coefficients across groups -- used for hyperprior(s) in full_cubic or full_quad
+ s2beta2l, s2beta2u	: bounds for Unif(a,b) prior for SD of quadratic coefficients across groups -- used for hyperprior(s) in full_cubic or full_quad [segment 2]
+ beta3l, beta3u		  : bounds for Unif(a,b) prior for SD of cubic coefficients across groups -- used for hyperprior(s) in full_cubic
+ s2beta3l, s2beta3u	: bounds for Unif(a,b) prior for SD of cubic coefficients across groups -- used for hyperprior(s) in full_cubic [segment 2]
+ ********************
+ mrho, prho			: prior mean and precision for transformed rho -- ie., psi = -ln[(1-rho)/(1+rho)]
+ taul, tauu			: bounds for Unif(a,b) prior for tau (SD of innovation variance tausq)
+ vshape, vscale	: Shape and scale parameters for inverse gamma prior distribution of the variance when randomVars = YES
+ wdirichlet			: [eMKF v2.4 streamlining] Whether to use the Dirichlet prior for model weights (default = NO) -- not fully tested yet
+ wshape				  : Common shape parameter to use for Dirichlet prior on model indicators in mixture priors (default = 2)
+ saslognotes		: [new in eMKF v2.4] = YES or <empty> to include and = NO to turn off SAS notes in log file. Warnings and error messages are kept. Default is NO.
+ cmploc				  : Desired location of CMP library (sasuser.funcs or work.funcs if sasuser is write-protected)
+*/
+
+%macro mkf(	
+      data			= , 
+      outcome		= , 
+      se				= , 
+			neff 			= ,
+		 	outcome2	= , 
+      se2				= , 
+			neff2 		= ,
+		  by				= ,  
+      group			= , 
+      time			= ,
+			breakPoint= ,
+			breakType	= ,     /* eMKF v2.4: unless breakType is specifically set to full_break, it will default to level_break */
+      slopes		= ,
+			Bayesmodel= ,   /* eMKF v2.4: changed to empty: when slopes = <empty>, this will default to bma_cubic when breakPoint = <empty> and bma_linear otherwise */
+			BayesmodelAvg = YES,
+			randomVars		= YES,
+			ARmodel		= common_ar,
+      xtrakeep	= ,
+      out				= param, 
+			nlmixedDetails= NO,
+			comparedto		= ,
+			comparedata		= ,
+      modelprint 		= NO,
+      finalprint 		= YES,
+  		/* eMKF: The parameters from here down should not be modified unless the user really knows what they are doing*/
+			pdigit 			= 4,
+      nlmixedDF 	= 10000, 			 
+			nlmixedTech	= ,
+			chains  		= 4 ,
+			GRthreshold = 1.01,
+			seed			  = 1235,
+			maxtune			= 50,
+			ntu				  = 1000,
+			nbi				  = 10000,
+			nmc				  = 50000,
+			thin			  = 1,			
+			accepttol		= ,	 
+			targetaccept= ,
+			propcov  		= ,
+			init 			  = reinit,
+			slicesampler= NO,
+			checkSampleSize	= YES,
+			orpoly 			    = YES,
+  		/* eMKF: If parameters below are empty, the data will be used to inform the starting values */
+		  /* eMKF v2.4: User can also specify regression related parameters in the Bayesian setting for segment 2 if applicable */
+			malpha 			= ,  palpha 	= , 
+			s2malpha 		= ,  s2palpha = , 
+			mbeta1  		= 0, pbeta1  	= , 
+			s2mbeta1  	= 0, s2pbeta1 = , 
+			mbeta2  		= 0, pbeta2  	= , 
+			s2mbeta2  	= 0, s2pbeta2 = , 
+			mbeta3  		= 0, pbeta3  	= , 
+			s2mbeta3  	= 0, s2pbeta3 = , 
+			beta1l  		= 0, beta1u  	= , 
+			s2beta1l  	= 0, s2beta1u = , 
+			beta2l  		= 0, beta2u  	= ,
+			s2beta2l  	= 0, s2beta2u = ,
+			beta3l  		= 0, beta3u  	= , 
+			s2beta3l  	= 0, s2beta3u = , 
+			mrho   			= 0, prho   	= 1,
+			taul   			= 0.0001, tauu= ,
+			vshape 			= ,  vscale 	= ,
+			wdirichlet	= NO, wshape  = 2,
+			mcmcplot 		= NO, mcmclog = NO,
+			saslognotes	= NO,
+			cmploc 			= work.funcs
+      ) / minoperator; /* eMKF v2.4 streamlining: minoperator keyword allows evaluation of macro IN operator instead of compiling string of OR conditions */
