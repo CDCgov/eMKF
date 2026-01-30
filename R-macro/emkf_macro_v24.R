@@ -34,7 +34,7 @@
 #   for all scalar variables, in addition to their posterior means and SDs  #
 # - Rmkf does not implement graphical diagnostics directly; however, users  #
 #   can call 'coda' diagnostic plots on the saved posterior sample;         #
-#   see examples provided in eMKF-R-testing-v24.R                           #
+#   see examples provided in emkf_macro_v24_tutorial.R                      #
 #                                                                           #  
 #                                                                           #  
 # Last modified: 30-Jan-2025                                                #
@@ -24737,3 +24737,4 @@ Rmkf <- function(data = "",                                         # (character
 # Rossen L, Talih M, Patel P, Earp M, Parker J. Evaluation of a modified Kalman filter approach for estimating health outcomes 
 # in small subpopulations. Vital Health Stat 2(208). 2024. DOI: 10.15620/cdc/157497.
 #
+
