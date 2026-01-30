@@ -153,13 +153,13 @@ proc print data=ExternalCausesByAge(obs=20);
 run;
 
 /* Compile the enhanced Modified Kalman Filter macro (eMKF) */
-%include "&user_path\eMKF\MKFmacro\emkf_macro.sas";
+%include "&user_path\eMKF\MKFmacro\emkf_macro_v24.sas";
 
 /*******************************************************************************/
 /* Age-adjusted data stratified by state (borrowing strength across r-e groups */
 /*******************************************************************************/
 
-/* Bayesian model averaging estimation */
+* Bayesian model averaging estimation ;
 %let _timer_start = %sysfunc(datetime()); 	/* start timer */
 title "Enhanced MKF. One outcome: Bayesian model averaging for up to cubic trends ";
  %mkf(data		 = ExternalCauses,  
@@ -177,8 +177,8 @@ data _null_;
 	put 30*'-' / ' TOTAL DURATION:' dur time13.2 / 30*'-';
 run;
 
-/* Maximum likelihood-based model averaging estimation */
-%let _timer_start = %sysfunc(datetime()); 	/* start timer */
+* Maximum likelihood-based model averaging estimation ;
+%let _timer_start = %sysfunc(datetime());
 title "Enhanced MKF. One outcome: Maximum likelihood-based model averaging with up to cubic trends ";
  %mkf(data		 = ExternalCauses,  
 	  group		 = Population,
@@ -193,7 +193,7 @@ title "Enhanced MKF. One outcome: Maximum likelihood-based model averaging with 
 	  out		 = mac
 	  );
 data _null_;
-	dur = datetime() - &_timer_start;		/* stop timer */
+	dur = datetime() - &_timer_start;
 	put 30*'-' / ' TOTAL DURATION:' dur time13.2 / 30*'-';
 run;
 
@@ -202,8 +202,8 @@ run;
 /* Age-adjusted data stratified by r-e group (borrowing strength across states */
 /*******************************************************************************/
 
-/* Bayesian model averaging estimation */
-%let _timer_start = %sysfunc(datetime()); 	/* start timer */
+* Bayesian model averaging estimation ;
+%let _timer_start = %sysfunc(datetime());
 title "Enhanced MKF. One outcome: Bayesian model averaging for up to cubic trends ";
  %mkf(data		 = ExternalCauses,  
 	  group		 = State,
@@ -211,17 +211,17 @@ title "Enhanced MKF. One outcome: Bayesian model averaging for up to cubic trend
 	  by 		 = Population,
 	  outcome	 = Age_Adjusted_Rate, 
 	  se 		 = Age_Adjusted_SE,
-	  randomVars = NO,		/* over-ride default due to underlying Poisson model for deaths whereby mean = variance */
+	  randomVars = NO,
 	  Bayesmodel = bma_cubic,
 	  out		 = bmac
 	  );
 data _null_;
-	dur = datetime() - &_timer_start;		/* stop timer */
+	dur = datetime() - &_timer_start;
 	put 30*'-' / ' TOTAL DURATION:' dur time13.2 / 30*'-';
 run;
 
-/* Maximum likelihood-based model averaging estimation */
-%let _timer_start = %sysfunc(datetime()); 	/* start timer */
+* Maximum likelihood-based model averaging estimation ;
+%let _timer_start = %sysfunc(datetime());
 title "Enhanced MKF. One outcome: Maximum likelihood-based model averaging with up to cubic trends ";
  %mkf(data		 = ExternalCauses,  
 	  group		 = State,
@@ -236,19 +236,19 @@ title "Enhanced MKF. One outcome: Maximum likelihood-based model averaging with 
 	  out		 = mac
 	  );
 data _null_;
-	dur = datetime() - &_timer_start;		/* stop timer */
+	dur = datetime() - &_timer_start;
 	put 30*'-' / ' TOTAL DURATION:' dur time13.2 / 30*'-';
 run;
 
-/************************************************************************************/
-/* Age-specific data stratified by state (borrowing strength across PopByAge groups */
-/* Running the below code is not recommended. Each model may take 40 hours or more. */
-/************************************************************************************/
+/*************************************************************************************/
+/* Age-specific data stratified by state (borrowing strength across PopByAge groups) */
+/* Running the below code is not recommended. Each model may take 40 hours or more.  */
+/*************************************************************************************/
 
-/* 
+/*
 
-/* Bayesian model averaging estimation */
-%let _timer_start = %sysfunc(datetime()); 	/* start timer */
+* Bayesian model averaging estimation ;
+%let _timer_start = %sysfunc(datetime());
 title "Enhanced MKF. One outcome: Bayesian model averaging for up to cubic trends ";
  %mkf(data		 = ExternalCausesByAge,  
 	  group		 = PopByAge,
@@ -256,17 +256,17 @@ title "Enhanced MKF. One outcome: Bayesian model averaging for up to cubic trend
 	  by 		 = State,
 	  outcome	 = Age_Specific_Rate, 
 	  se 		 = Age_Specific_SE,
-	  randomVars = NO,		/* over-ride default due to underlying Poisson model for deaths whereby mean = variance */
+	  randomVars = NO,
 	  Bayesmodel = bma_cubic,
 	  out		 = bmac
 	  );
 data _null_;
-	dur = datetime() - &_timer_start;		/* stop timer */
+	dur = datetime() - &_timer_start;
 	put 30*'-' / ' TOTAL DURATION:' dur time13.2 / 30*'-';
 run;
 
-/* Maximum likelihood-based model averaging estimation */
-%let _timer_start = %sysfunc(datetime()); 	/* start timer */
+* Maximum likelihood-based model averaging estimation ;
+%let _timer_start = %sysfunc(datetime());
 title "Enhanced MKF. One outcome: Maximum likelihood-based model averaging with up to cubic trends ";
  %mkf(data		 = ExternalCausesByAge,  
 	  group		 = PopByAge,
@@ -275,23 +275,19 @@ title "Enhanced MKF. One outcome: Maximum likelihood-based model averaging with 
 	  outcome	 = Age_Specific_Rate, 
 	  se 		 = Age_Specific_SE,
 	  Bayesmodel = ,
-	  slopes 	 = /*indep_cubic indep_quad indep_linear 
-				   common_cubic common_quad common_linear */
-				   dropped,
+	  slopes 	 = dropped,
 	  out		 = mac
 	  );
 data _null_;
-	dur = datetime() - &_timer_start;		/* stop timer */
+	dur = datetime() - &_timer_start;
 	put 30*'-' / ' TOTAL DURATION:' dur time13.2 / 30*'-';
 run;
 
 
-/************************************************************************************/
-/* Age-specific data stratified by PopByAge group (borrowing strength across states */
-/************************************************************************************/
+* Age-specific data stratified by PopByAge group (borrowing strength across states ;
 
-/* Bayesian model averaging estimation */
-%let _timer_start = %sysfunc(datetime()); 	/* start timer */
+* Bayesian model averaging estimation ;
+%let _timer_start = %sysfunc(datetime());
 title "Enhanced MKF. One outcome: Bayesian model averaging for up to cubic trends ";
  %mkf(data		 = ExternalCausesByAge,  
 	  group		 = State,
@@ -299,17 +295,17 @@ title "Enhanced MKF. One outcome: Bayesian model averaging for up to cubic trend
 	  by 		 = PopByAge,
 	  outcome	 = Age_Specific_Rate, 
 	  se 		 = Age_Specific_SE,
-	  randomVars = NO,		/* over-ride default due to underlying Poisson model for deaths whereby mean = variance */
+	  randomVars = NO,
 	  Bayesmodel = bma_cubic,
 	  out		 = bmac
 	  );
 data _null_;
-	dur = datetime() - &_timer_start;		/* stop timer */
+	dur = datetime() - &_timer_start;
 	put 30*'-' / ' TOTAL DURATION:' dur time13.2 / 30*'-';
 run;
 
-/* Maximum likelihood-based model averaging estimation */
-%let _timer_start = %sysfunc(datetime()); 	/* start timer */
+* Maximum likelihood-based model averaging estimation ;
+%let _timer_start = %sysfunc(datetime());
 title "Enhanced MKF. One outcome: Maximum likelihood-based model averaging with up to cubic trends ";
  %mkf(data		 = ExternalCausesByAge,  
 	  group		 = State,
@@ -324,8 +320,8 @@ title "Enhanced MKF. One outcome: Maximum likelihood-based model averaging with 
 	  out		 = mac
 	  );
 data _null_;
-	dur = datetime() - &_timer_start;		/* stop timer */
-
- */
+	dur = datetime() - &_timer_start;
 	put 30*'-' / ' TOTAL DURATION:' dur time13.2 / 30*'-';
 run;
+
+*/
