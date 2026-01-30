@@ -146,7 +146,7 @@ run;
 /**************************Comparison runs using extended MKF (eMKF) ********************************/
 
 /* Compile enhanced MKF macro */
-%include "&user_path\eMKF\MKFmacro\emkf_macro.sas";
+%include "&user_path\eMKF\MKFmacro\emkf_macro_v24.sas";
 
 /***************/
 /* One outcome */
