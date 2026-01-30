@@ -26,7 +26,7 @@ Sample SAS programs illustrating how to run the eMKF macro are included in [Test
 
 ### Running the R eMKF macro
 
-A tutorial with several examples on how to run the R eMKF macro ('Rmkf') is available from [emkf_macro_v24_tutorial.R](R-macro/emkf_macro_v24_tutorial.R).
+A tutorial with several examples on how to run the R eMKF macro is available from [emkf_macro_v24_tutorial.R](R-macro/emkf_macro_v24_tutorial.R).
 
 ### eMKF macro requirements
 
