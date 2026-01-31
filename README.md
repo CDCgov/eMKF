@@ -11,7 +11,7 @@ The SAS code to implement the eMKF macro version 2.4 is available from [emkf_mac
 ### Requires
 
 * SAS 9.4 for the SAS eMKF macro
-* R 4.4.0 or higher for the R eMKF macro
+* R 4.4.0 or higher for the R eMKF macro, with R 'nimble' version 1.3.0 or higher.
 
 ### Running the SAS eMKF macro
 
