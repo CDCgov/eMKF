@@ -137,7 +137,7 @@ Talih M, Rossen LM, Patel P, Earp M, Parker JD. The enhanced modified Kalman fil
 * Whereas SAS eMKF version 1.4 still allowed users to provide data in "format 1", eMKF version 2.4 only allows for "format 2".
 * To streamline code that could result in macro variables exceeding the SAS character limit, SAS eMKF macro version 2.4 revises cutoffs from 204 to 200 for the number of groups and 5508 to 5000 for the number of data points.
 
-## Main differences between the R and SAS implementations of eMKF macro version 2.4                                                                
+### Main differences between the R and SAS implementations of eMKF macro version 2.4                                                                
 * Only one outcome variable can be specified in the R eMKF macro.
 * Only Bayesian estimation is available in the R eMKF macro; the MLE option is not available.
 * Only one Bayesian model can be specified in the R eMKF macro; Bayesian model averaging (BMA) must be requested via the keywords bma_xxx.
