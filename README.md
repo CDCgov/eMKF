@@ -54,7 +54,7 @@ Talih M, Patel P, Rossen LM. The enhanced modified Kalman filter (eMKF) tool for
 
 Talih M, Rossen LM, Patel P, Earp M, Parker JD. The enhanced modified Kalman filter (eMKF) tool for small domain estimation [version 1.4 2024-08-10]. National Center for Health Statistics. 2024. Available from: <https://github.com/CDCgov/eMKF>.
 
-## Related documents
+### Related documents
 
 * eMKF Guidance Report (doi:10.15620/cdc/157496); see <https://www.cdc.gov/nchs/data/series/sr_02/sr02-209.pdf>.
    * Appendix II describes the parameter settings, defaults and functionality for the SAS eMKF macro version 1.4.
@@ -152,7 +152,7 @@ Talih M, Rossen LM, Patel P, Earp M, Parker JD. The enhanced modified Kalman fil
 * Unlike the SAS eMKF macro, the R eMKF macro gives its users the option to calculate the HPD credible intervals for all scalar variables, in addition to the posterior means and SDs of those variables.
 * Unlike the SAS eMKF macro, the R eMKF macro does not implement graphical diagnostics directly; however, users can call 'coda' diagnostic plots on the saved posterior sample; see the examples provided in [emkf_macro_v24_tutorial.R](R-macro/emkf_macro_v24_tutorial.R).
 
-### References
+## References
 
 de Valpine, P., D. Turek, C.J. Paciorek, C. Anderson-Bergman, D. Temple Lang, and R. Bodik. 2017. Programming with models: writing statistical algorithms for general model structures with NIMBLE. Journal of Computational and Graphical Statistics 26: 403-413. <https://doi.org/10.1080/10618600.2016.1172487>.
 
