@@ -1,3 +1,5 @@
+[![DOI](https://zenodo.org/badge/823812730.svg)](https://zenodo.org/badge/latestdoi/823812730)
+
 # The Enhanced Modified Kalman Filter (eMKF) tool for small domain estimation [version 2.4 2026-01-30]
 
 **General disclaimer** This repository was created for use by CDC programs to collaborate on public health related projects in support of the CDC mission. GitHub is not hosted by the CDC, but is a third party website used by CDC and its partners to share information and collaborate on software. CDC use of GitHub does not imply an endorsement of any one particular service, product, or enterprise. 
