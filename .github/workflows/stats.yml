@@ -1,7 +1,7 @@
 name: Repository Traffic
 on:
   schedule:
-    - cron: "0 23 * * *"
+    - cron: "55 23 * * 1"
   workflow_dispatch:
 
 jobs:
@@ -10,5 +10,7 @@ jobs:
     steps:
       - name: Repository Traffic
         uses: wumphlett/repostats@v2.1.0
+        with:
+          format_readme: false
         env:
           TRAFFIC_ACTION_TOKEN: ${{ secrets.ghrs_github_api_token }}
