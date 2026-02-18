@@ -184,6 +184,75 @@ def create_plot(views_data, clones_data, stars_data):
     plt.savefig(TRAFFIC_DIR / 'traffic_plot.png', dpi=150, bbox_inches='tight')
     print("Plot saved to .traffic/traffic_plot.png")
 
+def create_readme(summary, views_data, clones_data, stars_data):
+    """Create a dynamic README with current stats"""
+    last_updated = datetime.fromisoformat(summary['last_updated']).strftime('%B %d, %Y at %H:%M UTC')
+    
+    # Calculate stats
+    total_views = sum(v.get('count', 0) for v in views_data)
+    total_unique_views = sum(v.get('uniques', 0) for v in views_data)
+    total_clones = sum(c.get('count', 0) for c in clones_data)
+    total_unique_clones = sum(c.get('uniques', 0) for c in clones_data)
+    current_stars = stars_data[-1]['total'] if stars_data else 0
+    
+    # Get latest 14-day stats
+    latest_views = views_data[-14:] if len(views_data) >= 14 else views_data
+    latest_clones = clones_data[-14:] if len(clones_data) >= 14 else clones_data
+    
+    recent_views = sum(v.get('count', 0) for v in latest_views)
+    recent_unique_views = sum(v.get('uniques', 0) for v in latest_views)
+    recent_clones = sum(c.get('count', 0) for c in latest_clones)
+    recent_unique_clones = sum(c.get('uniques', 0) for c in latest_clones)
+    
+    readme_content = f"""# Repository Traffic Statistics
+
+> Last updated: **{last_updated}**
+
+## 📊 Traffic Overview
+
+![Traffic Stats](traffic_plot.png)
+
+## 📈 Current Stats
+
+### Latest 14 Days
+| Metric | Total | Unique |
+|--------|-------|--------|
+| 👁️ **Views** | {recent_views:,} | {recent_unique_views:,} |
+| 📦 **Clones** | {recent_clones:,} | {recent_unique_clones:,} |
+| ⭐ **Stars** | {current_stars:,} | - |
+
+### All Time (Since Tracking Started)
+| Metric | Total | Unique | Data Points |
+|--------|-------|--------|-------------|
+| 👁️ **Views** | {total_views:,} | {total_unique_views:,} | {len(views_data)} days |
+| 📦 **Clones** | {total_clones:,} | {total_unique_clones:,} | {len(clones_data)} days |
+| ⭐ **Stars** | {current_stars:,} | - | {len(stars_data)} days |
+
+## 📁 Available Files
+
+- **`traffic_plot.png`** - Visual charts (views, clones, stars)
+- **`traffic_chart.txt`** - ASCII charts for terminal viewing
+- **`views.json`** - Historical views data
+- **`clones.json`** - Historical clones data
+- **`stars.json`** - Historical stars data
+- **`summary.json`** - Statistics summary
+
+## 🔄 How This Works
+
+This data is automatically collected every 14 days by a GitHub Action. Since GitHub only retains traffic data for 14 days, this action:
+1. Fetches the current data from GitHub's API
+2. Merges it with historical data
+3. Builds a continuous timeline beyond the 14-day limit
+
+Each run adds to the existing dataset, creating a complete historical record.
+"""
+    
+    with open(TRAFFIC_DIR / 'README.md', 'w') as f:
+        f.write(readme_content)
+    
+    print("Dynamic README saved to .traffic/README.md")
+
+
 def main():
     print(f"Fetching traffic data for {REPOSITORY}...")
     
@@ -195,12 +264,12 @@ def main():
     stargazers = fetch_stargazers()
     stars_data = aggregate_stars_by_date(stargazers)
     
-    # Load historical data
+    # Load historical data (accumulates over time)
     historical_views = load_historical_data('views.json')
     historical_clones = load_historical_data('clones.json')
     historical_stars = load_historical_data('stars.json')
     
-    # Merge with new data
+    # Merge with new data (GitHub API returns last 14 days, we merge to build complete history)
     updated_views = merge_traffic_data(historical_views, views_response.get('views', []))
     updated_clones = merge_traffic_data(historical_clones, clones_response.get('clones', []))
     updated_stars = merge_traffic_data(historical_stars, stars_data)
@@ -242,6 +311,10 @@ def main():
     }
     
     save_data('summary.json', summary)
+    
+    # Create dynamic README
+    create_readme(summary, updated_views, updated_clones, updated_stars)
+    
     print(f"Summary saved. Views: {len(updated_views)}, Clones: {len(updated_clones)}, Stars: {len(updated_stars)}")
 
 if __name__ == '__main__':

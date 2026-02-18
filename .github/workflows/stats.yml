@@ -37,5 +37,5 @@ jobs:
       - name: Commit and push changes
         uses: EndBug/add-and-commit@v9.1.1
         with:
-          message: 'Update traffic stats'
+          message: 'Update traffic stats [skip ci]'
           add: '.traffic/*'
