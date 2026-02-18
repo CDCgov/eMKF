@@ -8,6 +8,13 @@ jobs:
   traffic:
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
+      - name: Copy README to template
+        run: |
+          cp README.md .github/TEMPLATE_README.md
+      
       - name: Repository Traffic
         uses: wumphlett/repostats@v2.1.0
         with:
