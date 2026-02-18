@@ -1,0 +1,25 @@
+{
+  "last_updated": "2026-02-18T20:47:15.287398",
+  "total_data_points": {
+    "views": 14,
+    "clones": 14,
+    "stars": 4
+  },
+  "latest_stats": {
+    "views": {
+      "timestamp": "2026-02-17T00:00:00Z",
+      "count": 1,
+      "uniques": 1
+    },
+    "clones": {
+      "timestamp": "2026-02-17T00:00:00Z",
+      "count": 16,
+      "uniques": 5
+    },
+    "stars": {
+      "timestamp": "2025-08-21",
+      "count": 1,
+      "total": 4
+    }
+  }
+}

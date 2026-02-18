@@ -1,23 +1,41 @@
-name: Repository Traffic
+name: Track Repository Traffic
+
 on:
   schedule:
-    - cron: "55 23 * * 1"
-  workflow_dispatch:
+    # Run every 14 days at 00:00 UTC
+    - cron: '0 0 */14 * *'
+  workflow_dispatch: # Allow manual trigger
+
+permissions:
+  contents: write
 
 jobs:
-  traffic:
+  track-traffic:
     runs-on: ubuntu-latest
+    
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-      
-      - name: Copy README to template
-        run: |
-          cp README.md .github/TEMPLATE_README.md
-      
-      - name: Repository Traffic
-        uses: wumphlett/repostats@v2.1.0
         with:
-          format_readme: false
+          fetch-depth: 0
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      
+      - name: Install dependencies
+        run: |
+          pip install requests matplotlib pandas
+      
+      - name: Fetch and process traffic data
         env:
-          TRAFFIC_ACTION_TOKEN: ${{ secrets.ghrs_github_api_token }}
+          GITHUB_TOKEN: ${{ secrets.ghrs_github_api_token }}
+          REPOSITORY: ${{ github.repository }}
+        run: python .github/scripts/traffic_tracker.py
+      
+      - name: Commit and push changes
+        uses: EndBug/add-and-commit@v9.1.1
+        with:
+          message: 'Update traffic stats [skip ci]'
+          add: '.traffic/*'
