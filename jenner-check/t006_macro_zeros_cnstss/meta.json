@@ -1,0 +1,8 @@
+{
+  "bundle": "t006_macro_zeros_cnstss",
+  "source_file": "SAS-macro/emkf_macro_v24.sas",
+  "source_blob_sha": "982dde6308d5cd9ca660ce5afdfe8793c1c37d3e",
+  "source_commit": "4e83417b275323ea142a098795afdd1174d0c270",
+  "tier": "real_data",
+  "notes": "Caller for three list-building utility macros copied verbatim from the eMKF library: %zeros (comma-separated zeros), %zeross (space-separated zeros), and %cnstss (a constant repeated). The eMKF macro uses these to assemble the parameter mean vectors passed to PROC NLMIXED and PROC MCMC. The caller drives each with realistic counts and surfaces the generated vectors in a dataset (the macros emit one element per line, so the caller TRANSLATEs the line breaks to spaces and COMPBLs for single-cell display). Exercises %macro/%mend definition, %do %TO with %eval, and %sysevalf."
+}

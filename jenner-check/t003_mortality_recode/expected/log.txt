@@ -1,0 +1,38 @@
+Jenner 0.1.0 (Unlicensed - limited to 100 observations)
+Get a license at https://jenneranalytics.com/license
+
+NOTE: Option OBS changed to 100.
+NOTE: DATA ExternalCauses
+
+NOTE: Processing inline DATALINES (30 lines)
+
+NOTE: Read 30 rows from DATALINES.
+NOTE: Wrote ExternalCauses (30 rows, 11 columns).
+NOTE: DATA elapsed:
+  wall  0.00 seconds
+  cpu   0.00 seconds
+NOTE: DATA ExternalCauses
+
+
+NOTE: Read 30 rows from ExternalCauses.
+NOTE: Wrote ExternalCauses (25 rows, 11 columns).
+NOTE: DATA elapsed:
+  wall  0.00 seconds
+  cpu   0.00 seconds
+NOTE: DATA ExternalCausesGrouped
+
+
+NOTE: Read 25 rows from ExternalCauses.
+NOTE: Wrote ExternalCausesGrouped (25 rows, 12 columns).
+NOTE: DATA elapsed:
+  wall  0.00 seconds
+  cpu   0.00 seconds
+NOTE: PROC SORT data=ExternalCausesGrouped
+
+NOTE: Unlicensed mode - input limited to 100 observations.
+NOTE: Read 25 rows from ExternalCausesGrouped.
+NOTE: Wrote ExternalCausesGrouped (25 rows, 12 columns).
+NOTE: PROC SORT statement used.
+NOTE: PROC PRINT data=ExternalCausesGrouped
+
+NOTE: PROC PRINT completed: 20 observations printed, 12 variables

@@ -1,0 +1,15 @@
+{
+  "_captured_at": "2026-06-12T01:00:00Z",
+  "_captured_run_id": "r_019eb7cf7e2479f1a15bbca32636ac1b",
+  "status": "ok",
+  "exit_code": 0,
+  "log_contains": [
+    "NOTE: Wrote ExternalCauses (30 rows, 11 columns).",
+    "NOTE: Wrote ExternalCauses (25 rows, 11 columns).",
+    "NOTE: Wrote ExternalCausesGrouped (25 rows, 12 columns).",
+    "NOTE: PROC SORT statement used.",
+    "NOTE: PROC PRINT completed: 20 observations printed, 12 variables"
+  ],
+  "log_does_not_contain": ["ERROR:", "[JENNER-ERROR"],
+  "diagnostics": {"parse_warnings": [], "runtime_warnings": []}
+}

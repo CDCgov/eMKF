@@ -1,0 +1,8 @@
+
+                KIND             VECTOR
+--------------------  -----------------
+zeros(5), comma sep    0 ,0 ,0 ,0 ,0
+zeross(5), space sep   0 0 0 0 0
+cnstss(0.5, 4)         0.5 0.5 0.5 0.5
+cnstss(1, 3)           1 1 1
+

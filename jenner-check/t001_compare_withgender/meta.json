@@ -1,0 +1,8 @@
+{
+  "bundle": "t001_compare_withgender",
+  "source_file": "Testing-and-implementation/Compare-eMKF-to-MKF.sas",
+  "source_blob_sha": "24c213aa7fc5437ba9f2d6e55b3973f8aabd11ba",
+  "source_commit": "4e83417b275323ea142a098795afdd1174d0c270",
+  "tier": "real_data",
+  "notes": "The simulated multi-group survey dataset (withgender) the repo ships inline via DATALINES with list input and a trailing @@; reads 24 record pairs into 48 observations across 6 race groups by gender and year, then the where Race='White' subset (withgender2, 8 obs). Both previewed with PROC PRINT. Only change from source: the LABEL statement's Windows-1252 smart-quote glyphs rendered as plain double quotes; label text unchanged."
+}

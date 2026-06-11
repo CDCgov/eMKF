@@ -1,0 +1,63 @@
+
+  Obs      RACE   GENDER  YEAR  DISEASE      SE
+-----  --------  -------  ----  -------  ------
+    1  White     	Male    2000   0.2455  0.0028
+    2  White     Male     2001   0.2454   0.003
+    3  White     	Male    2002   0.2461  0.0031
+    4  White     Male     2003   0.2464  0.0031
+    5  White     	Female  2000   0.1197  0.0231
+    6  White     Female   2001   0.1239  0.0273
+    7  White     	Female  2002   0.1109  0.0252
+    8  White     Female   2003    0.124  0.0259
+    9  Black     	Male    2000   0.2527  0.0031
+   10  Black     Male     2001    0.265  0.0032
+   11  Black     	Male    2002   0.2744  0.0033
+   12  Black     Male     2003   0.2794  0.0033
+   13  Black     	Female  2000   0.1309  0.0255
+   14  Black     Female   2001   0.1914  0.0293
+   15  Black     	Female  2002   0.1475   0.027
+   16  Black     Female   2003   0.1712  0.0309
+   17  Chinese   	Male    2000   0.3138  0.0068
+   18  Chinese   Male     2001   0.3221  0.0075
+   19  Chinese   	Male    2002   0.3063  0.0074
+   20  Chinese   Male     2003   0.3141  0.0072
+   21  Chinese   	Female  2000   0.1666  0.0076
+   22  Chinese   Female   2001   0.1804  0.0079
+   23  Chinese   	Female  2002    0.181  0.0085
+   24  Chinese   Female   2003   0.1634  0.0082
+   25  Indian    	Male    2000   0.3232  0.0073
+   26  Indian    Male     2001   0.3215  0.0076
+   27  Indian    	Male    2002   0.3439  0.0079
+   28  Indian    Male     2003   0.3334  0.0077
+   29  Indian    	Female  2000   0.1249  0.0086
+   30  Indian    Female   2001   0.1227  0.0096
+   31  Indian    	Female  2002   0.1161  0.0084
+   32  Indian    Female   2003     0.13  0.0086
+   33  Hispanic  	Male    2000    0.253  0.0373
+   34  Hispanic  Male     2001   0.2263  0.0388
+   35  Hispanic  	Male    2002     0.21  0.0355
+   36  Hispanic  Male     2003   0.2852  0.0383
+   37  Hispanic  	Female  2000   0.1173  0.0289
+   38  Hispanic  Female   2001   0.1083  0.0276
+   39  Hispanic  	Female  2002   0.1055  0.0245
+   40  Hispanic  Female   2003   0.1056  0.0226
+   41  Other     	Male    2000   0.2696  0.0314
+   42  Other     Male     2001   0.2686  0.0353
+   43  Other     	Male    2002   0.2597  0.0354
+   44  Other     Male     2003   0.3326  0.0364
+   45  Other     	Female  2000   0.0649  0.0194
+   46  Other     Female   2001   0.1304  0.0269
+   47  Other     	Female  2002   0.1993  0.0178
+   48  Other     Female   2003   0.2232  0.0184
+
+  Obs   RACE   GENDER  YEAR  DISEASE      SE
+-----  -----  -------  ----  -------  ------
+    1  White  	Male    2000   0.2455  0.0028
+    2  White  Male     2001   0.2454   0.003
+    3  White  	Male    2002   0.2461  0.0031
+    4  White  Male     2003   0.2464  0.0031
+    5  White  	Female  2000   0.1197  0.0231
+    6  White  Female   2001   0.1239  0.0273
+    7  White  	Female  2002   0.1109  0.0252
+    8  White  Female   2003    0.124  0.0259
+

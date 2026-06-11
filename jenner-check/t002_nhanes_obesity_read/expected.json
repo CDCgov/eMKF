@@ -1,0 +1,14 @@
+{
+  "_captured_at": "2026-06-12T00:55:00Z",
+  "_captured_run_id": "r_019eb7ce5d1b7e43a5c130fc4e164671",
+  "status": "ok",
+  "exit_code": 0,
+  "log_contains": [
+    "NOTE: Processing inline DATALINES (30 lines)",
+    "NOTE: Read 30 rows from DATALINES.",
+    "NOTE: Wrote NHANESobesity (30 rows, 10 columns).",
+    "NOTE: PROC PRINT completed: 20 observations printed, 10 variables"
+  ],
+  "log_does_not_contain": ["ERROR:", "[JENNER-ERROR"],
+  "diagnostics": {"parse_warnings": [], "runtime_warnings": []}
+}

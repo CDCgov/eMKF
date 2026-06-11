@@ -1,0 +1,8 @@
+{
+  "bundle": "t002_nhanes_obesity_read",
+  "source_file": "Testing-and-implementation/Example-eMKF-NHANES-Data.sas",
+  "source_blob_sha": "e48be0c4230aedc631d28915e3d3095b06934e39",
+  "source_commit": "4e83417b275323ea142a098795afdd1174d0c270",
+  "tier": "real_data",
+  "notes": "The DATA step that reads NHANES adult obesity prevalence into the eMKF stacked (long) layout. Upstream reads Sample-data-files/nhanes9920obesity.csv via INFILE ... DELIMITER=',' DSD; the same comma-delimited DSD parsing and the full INFORMAT/FORMAT/INPUT block are kept verbatim, with the first 30 real rows of that CSV embedded inline via DATALINES so the bundle runs self-contained. PROC PRINT obs=20 preview as in the example. Exercises numeric/character informats, DSD handling of quoted fields with embedded commas (e.g. 'Black, non-Hispanic'), and fractional timepoints (1999.5)."
+}

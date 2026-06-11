@@ -1,0 +1,8 @@
+{
+  "bundle": "t003_mortality_recode",
+  "source_file": "Testing-and-implementation/Example-eMKF-Simulated-Mortality-Data.sas",
+  "source_blob_sha": "6220ed58b5c1e5a166bbc4b2221534bf9a052a2e",
+  "source_commit": "4e83417b275323ea142a098795afdd1174d0c270",
+  "tier": "real_data",
+  "notes": "The state-level external-cause mortality (V01-Y89) preparation pipeline: read into the eMKF layout, then the population-group recode (subsetting IF that drops the 'All' rows, six IF/THEN relabels of race/Hispanic-origin categories to short codes), RENAME of Population_Group->Population and Year_Code->Year, and a catx(':', Population, State) grouping, finished with PROC SORT and a PROC PRINT preview. The INFILE ... DSD read is kept; the first 30 real rows (year 1999, five states, all six population groups) are embedded inline via DATALINES so all recode branches and the subsetting IF fire. 30 rows in -> 25 after dropping 'All'."
+}

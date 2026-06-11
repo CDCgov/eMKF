@@ -1,0 +1,8 @@
+{
+  "bundle": "t004_nhis_neff_compute",
+  "source_file": "Testing-and-implementation/Compare-eMKF-to-MKF.sas",
+  "source_blob_sha": "24c213aa7fc5437ba9f2d6e55b3973f8aabd11ba",
+  "source_commit": "4e83417b275323ea142a098795afdd1174d0c270",
+  "tier": "real_data",
+  "notes": "The NHISdata2 step that derives effective sample sizes via stroke*(1-stroke)/stroke_se**2 and diabetes*(1-diabetes)/diabetes_se**2, then KEEPs the eMKF input columns and RENAMEs race_ethnicity to race. Upstream this SETs sdata.nhis (the repo's NHIS sample dataset, shipped as a .sas7bdat); here NHISdata is stood up inline from a small race-by-year stroke/diabetes prevalence + SE table of matching shape so the bundle runs self-contained. The NEFF arithmetic, KEEP, and RENAME are exactly as written upstream. Exercises arithmetic expressions with exponentiation, KEEP, and RENAME."
+}
